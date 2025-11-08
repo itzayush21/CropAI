@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CropAI | Pest Control Advisor</title>
+    <style>
+        :root {
+            --accent: #b3ff00;
+            --accent2: #70ffb3;
+            --border: rgba(255, 255, 255, 0.25);
+            --text: #ede4e4;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Poppins", sans-serif;
+            background: url('https://images.unsplash.com/photo-1563201515-adbe35c669c5?auto=format&fit=crop&w=1350&q=80') center/cover no-repeat;
+            color: var(--text);
+            display: grid;
+            grid-template-rows: auto 1fr;
+            min-height: 100vh;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            padding: 1.4rem 3rem;
+            backdrop-filter: blur(15px);
+        }
+
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .btn {
+            border: none;
+            padding: 0.8rem 1.4rem;
+            border-radius: 999px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-cta {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #000;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        main {
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 2rem;
+            padding: 2rem 3rem;
+        }
+
+        .card {
+            background: rgba(20, 25, 30, 0.8);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            padding: 2rem 2.2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 1.2rem;
+            height: calc(100vh - 180px);
+            /* fits neatly under header with balanced height */
+            overflow-y: auto;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        /* Improve scrollbar experience */
+        .card::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .card::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .card::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+
+        /* Make headings and inputs flow better */
+        .card h3 {
+            color: var(--accent);
+            font-size: 1.3rem;
+            text-align: center;
+            margin-bottom: 0.8rem;
+        }
+
+        .card label {
+            margin-top: 0.8rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .card input,
+        .card textarea {
+            margin-top: 0.3rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 12px;
+            padding: 1rem;
+            color: var(--text);
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.25s ease;
+        }
+
+        .card input:focus,
+        .card textarea:focus {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.35);
+            box-shadow: 0 0 8px rgba(179, 255, 0, 0.4);
+        }
+
+        /* Keep buttons neatly aligned even when content grows */
+        .card .submit-wrap {
+            margin-top: auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.8rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+
+        .chat {
+            display: grid;
+            grid-template-rows: 1fr auto;
+            height: calc(100vh - 150px);
+            gap: 1rem;
+        }
+
+        .chat-window {
+            background: rgba(15, 25, 30, 0.6);
+            border-radius: 20px;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+
+        .result-card {
+            background: rgba(30, 40, 45, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(8px);
+        }
+
+        .result-card h4 {
+            margin: 0 0 0.4rem 0;
+            color: var(--accent);
+            font-size: 1.1rem;
+        }
+
+        .result-section {
+            margin-top: 0.4rem;
+            line-height: 1.6;
+        }
+
+        .result-section strong {
+            color: var(--accent2);
+        }
+
+        .recommend-box {
+            background: rgba(179, 255, 0, 0.1);
+            border-left: 4px solid var(--accent);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            font-size: 1.05rem;
+            line-height: 1.7;
+        }
+
+
+        .msg {
+            margin-bottom: 1rem;
+            display: flex;
+        }
+
+        .bubble {
+            border-radius: 14px;
+            padding: 1rem 1.3rem;
+            line-height: 1.7;
+            font-size: 1rem;
+            max-width: 80%;
+        }
+
+        .user {
+            background: linear-gradient(135deg, rgba(179, 255, 0, .25), rgba(112, 255, 179, .18));
+            margin-left: auto;
+        }
+
+        .bot {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border);
+        }
+
+        .chat-input {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 5rem;
+            align-items: center;
+            background: rgba(20, 30, 35, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 0.8rem 1rem;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(8px);
+        }
+
+        input,
+        textarea {
+            width: 100%;
+            padding: 1rem 1.2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            background: rgba(255, 255, 255, 0.25);
+            color: var(--text);
+            font-size: 1rem;
+            font-family: "Poppins", sans-serif;
+            outline: none;
+            transition: all 0.25s ease;
+            box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+            font-style: italic;
+        }
+
+        input:focus,
+        textarea:focus {
+            background: rgba(255, 255, 255, 0.35);
+            border-color: var(--accent);
+            box-shadow: 0 0 10px rgba(179, 255, 0, 0.5), inset 0 0 5px rgba(179, 255, 0, 0.25);
+            color: #fff;
+        }
+
+        .submit-wrap {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.2rem;
+        }
+
+        #historyModal {
+            position: fixed;
+            inset: 0;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        #historyModal .inner {
+            background: rgba(20, 25, 30, 0.96);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            width: 70%;
+            max-width: 750px;
+            max-height: 75vh;
+            display: flex;
+            flex-direction: column;
+            padding: 1.8rem 2rem;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+            transform: scale(0.95);
+            animation: popUp 0.25s ease forwards;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 0.8rem;
+        }
+
+        .modal-header h3 {
+            color: var(--accent);
+            font-size: 1.25rem;
+            margin: 0;
+        }
+
+        #closeHistory {
+            font-size: 1.1rem;
+            padding: 0.4rem 0.8rem;
+        }
+
+        .history-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .history-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .history-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 8px;
+        }
+
+        .history-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.45);
+        }
+
+        /* --- Entry Card Styling --- */
+        .history-scroll details {
+            background: rgba(255, 255, 255, 0.06);
+            padding: 1rem;
+            margin-bottom: 0.8rem;
+            border-radius: 12px;
+            border-left: 4px solid var(--accent);
+            transition: all 0.25s ease;
+        }
+
+        .history-scroll details:hover {
+            background: rgba(255, 255, 255, 0.09);
+            transform: scale(1.01);
+        }
+
+        .history-scroll summary {
+            cursor: pointer;
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 1.05rem;
+        }
+
+        /* --- Subsections inside history --- */
+        .history-scroll div {
+            margin-top: 0.6rem;
+            line-height: 1.6;
+            color: #eee;
+            font-size: 0.95rem;
+        }
+
+        /* --- Modal Animations --- */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes popUp {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">🐛 CropAI — Pest Control Advisor</div>
+        <button class="btn btn-ghost" onclick="location.href='/dashboard'">Dashboard</button>
+    </header>
+
+    <main>
+        <section class="card">
+            <h3>Pest Control Preferences</h3>
+            <label>Crop Name</label>
+            <input id="crop_name" placeholder="e.g., Rice, Wheat, Cotton" />
+
+            <label>Known Pest (Optional)</label>
+            <input id="pest_name" placeholder="e.g., Aphids, Whiteflies" />
+
+            <label>Notes</label>
+            <textarea id="notes" placeholder="Describe symptoms, infestation level, or prior treatments"></textarea>
+
+            <div class="submit-wrap">
+                <button class="btn btn-cta" id="genBtn">Get Pest Control Advice</button>
+                <button class="btn btn-ghost" id="clearBtn">Clear Chat</button>
+                <button class="btn btn-ghost" id="historyBtn">Show History</button>
+            </div>
+        </section>
+
+        <section class="chat">
+            <div id="chatWindow" class="chat-window">
+                <div class="msg bot">
+                    <div class="bubble bot">👋 Hi, I’m CropAI’s Pest Advisor. Tell me your crop and symptoms — I’ll
+                        suggest safe and effective pest management.</div>
+                </div>
+            </div>
+            <div class="chat-input">
+                <input id="userPrompt" placeholder="Ask follow-up (e.g., How to treat aphids naturally?)" />
+                <button class="btn btn-cta" id="sendBtn">Send</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL (Centered Dialog Box) -->
+    <div id="historyModal">
+  <div class="inner">
+    <div class="modal-header">
+      <h3>📜 Pest Control History</h3>
+      <button id="closeHistory" class="btn btn-ghost">✕</button>
+    </div>
+
+    <div id="historyContent" class="history-scroll"></div>
+  </div>
+</div>
+
+    <script>
+        const chatWindow = document.getElementById('chatWindow');
+
+        function addMsg(text, who = 'bot', html = false) {
+            const msg = document.createElement('div');
+            msg.className = 'msg ' + who;
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble ' + who;
+            if (html) bubble.innerHTML = text;
+            else bubble.textContent = text;
+            msg.appendChild(bubble);
+            chatWindow.appendChild(msg);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function formatMarkdown(text) {
+            // Basic markdown-like replacements
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/^- /gm, '• ')
+                .replace(/\n/g, '<br>');
+        }
+
+        async function callAdvisor(extra = null) {
+            const payload = {
+                context: {
+                    crop_name: document.getElementById('crop_name').value,
+                    pest_name: document.getElementById('pest_name').value,
+                    notes: document.getElementById('notes').value
+                },
+                user_query: extra
+            };
+
+            const res = await fetch('/api/pest-control-advisor', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (data.error) return addMsg('Error: ' + data.error, 'bot');
+
+            let html = `<p>${formatMarkdown(data.reply || '')}</p>`;
+
+            if (data.pests && data.pests.length) {
+                html += data.pests
+                    .map(
+                        (p) => `
+        <div class="result-card">
+          <h4>🐛 ${p.name}</h4>
+          <div class="result-section"><strong>Symptoms:</strong> ${formatMarkdown(p.symptoms || '')}</div>
+          <div class="result-section"><strong>Organic Control:</strong><br>${formatMarkdown(p.organic_control || '')}</div>
+          <div class="result-section"><strong>Chemical Control:</strong><br>${formatMarkdown(p.chemical_control || '')}</div>
+          <div class="result-section"><strong>Prevention:</strong><br>${formatMarkdown(p.prevention_tips || '')}</div>
+        </div>`
+                    )
+                    .join('');
+            }
+
+            if (data.recommendations) {
+                html += `<div class="recommend-box"><strong>🧩 Recommendations:</strong><br>${formatMarkdown(
+                    data.recommendations
+                )}</div>`;
+            }
+
+            addMsg(html, 'bot', true);
+        }
+
+        document.getElementById('genBtn').onclick = () => {
+            addMsg('Analyzing pest conditions...', 'user');
+            callAdvisor();
+        };
+
+        document.getElementById('clearBtn').onclick = () => (chatWindow.innerHTML = '');
+
+        document.getElementById('sendBtn').onclick = () => {
+            const q = document.getElementById('userPrompt').value.trim();
+            if (!q) return;
+            addMsg(q, 'user');
+            callAdvisor(q);
+            document.getElementById('userPrompt').value = '';
+        };
+
+        // History Modal
+        document.getElementById('historyBtn').onclick = async () => {
+            const modal = document.getElementById('historyModal');
+            modal.style.display = 'flex';
+
+            const res = await fetch('/api/pest-control-advisor/history');
+            const data = await res.json();
+
+            document.getElementById('historyContent').innerHTML = data
+                .map((item, idx) => `
+<details style="background:rgba(255,255,255,0.06);padding:1rem;margin-bottom:0.7rem;border-radius:12px;border-left:4px solid #b3ff00;">
+  <summary style="cursor:pointer;color:#b3ff00;font-weight:600;font-size:1.05rem;">
+    #${idx + 1} ${item.crop_name || 'Unknown Crop'} (${item.pest_name || '—'})
+  </summary>
+
+  <div style="margin-top:0.7rem;line-height:1.6;color:#eee;font-size:0.95rem;">
+    ${(() => {
+                        const conv = item.conversation || {};
+                        const pests = conv.pests || [];
+                        const format = (t = '') =>
+                            t
+                                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                                .replace(/^- /gm, '• ')
+                                .replace(/\n/g, '<br>');
+
+                        let html = '';
+
+                        if (conv.reply)
+                            html += `<p style='margin-bottom:0.6rem;'>${format(conv.reply)}</p>`;
+
+                        if (pests.length) {
+                            html += pests.map(p => `
+          <div style='margin-top:0.8rem;padding:0.7rem 1rem;background:rgba(255,255,255,0.08);border-radius:10px;'>
+            <strong style='color:#70ffb3;'>🐛 ${p.name}</strong><br>
+            <strong>Symptoms:</strong> ${format(p.symptoms || '')}<br>
+            <strong>Organic Control:</strong> ${format(p.organic_control || '')}<br>
+            <strong>Chemical Control:</strong> ${format(p.chemical_control || '')}<br>
+            <strong>Prevention:</strong> ${format(p.prevention_tips || '')}
+          </div>
+        `).join('');
+                        }
+
+                        if (conv.recommendations)
+                            html += `<div style='margin-top:0.8rem;padding:0.8rem;background:rgba(179,255,0,0.1);border-left:3px solid #b3ff00;border-radius:8px;'>
+          <strong>🧩 Recommendations:</strong><br>${format(conv.recommendations)}
+        </div>`;
+
+                        return html;
+                    })()}
+  </div>
+</details>
+    `)
+                .join('');
+        };
+
+        document.getElementById('closeHistory').onclick = () => {
+            document.getElementById('historyModal').style.display = 'none';
+        };
+
+    </script>
+
+</body>
+
+</html>

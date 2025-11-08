@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Crop Room | CropAI</title>
+  <style>
+    :root {
+      --accent: #b3ff00;
+      --accent2: #70ffb3;
+      --border: rgba(255, 255, 255, 0.2);
+      --text: #f2f2f2;
+      --bg: rgba(15, 20, 25, 0.85);
+    }
+
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: url('https://images.unsplash.com/photo-1589923188900-65e45b3b17b3?auto=format&fit=crop&w=1500&q=80') center/cover no-repeat;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--text);
+      padding: 1rem;
+    }
+
+    .container {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 2.5rem 3rem;
+      width: 620px;
+      max-width: 90%;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(15px);
+    }
+
+    h2 {
+      text-align: center;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    p.desc {
+      text-align: center;
+      color: #ccc;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+    }
+
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: 600;
+      color: #ddd;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      padding: 0.9rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--text);
+      font-size: 1rem;
+      margin-top: 0.3rem;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    .btn {
+      width: 100%;
+      margin-top: 1.8rem;
+      padding: 1rem;
+      border-radius: 999px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #000;
+      transition: 0.3s ease;
+      font-size: 1.05rem;
+    }
+
+    .btn:hover {
+      transform: scale(1.03);
+    }
+
+    .context-box {
+      margin-top: 1.4rem;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 1rem 1.2rem;
+      font-size: 0.95rem;
+      color: #ccc;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .context-box strong {
+      color: var(--accent2);
+    }
+
+    .note {
+      font-size: 0.8rem;
+      color: #aaa;
+      text-align: center;
+      margin-top: 0.8rem;
+    }
+
+    .loading {
+      text-align: center;
+      color: #aaa;
+      font-style: italic;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h2>🌾 Create New Crop Room</h2>
+    <p class="desc">Setup a smart environment for your crop — includes real-time soil and weather context.</p>
+
+    <form id="cropRoomForm">
+      <label for="chosen_crop">Crop Name</label>
+      <input id="chosen_crop" name="chosen_crop" placeholder="e.g., Wheat, Maize, Paddy" required />
+
+      <label for="expectation">Expected Yield (Optional)</label>
+      <input id="expectation" name="expectation" placeholder="e.g., 12 quintals/acre" />
+
+      <label for="budget">Budget (₹)</label>
+      <input id="budget" name="budget" type="number" placeholder="e.g., 15000" />
+
+      <label for="soil_override">Soil Type (Auto-detected, override optional)</label>
+      <input id="soil_override" name="soil_override" placeholder="e.g., Loamy Soil" />
+
+      <label for="notes">Notes / Goals (Optional)</label>
+      <textarea id="notes" name="notes" rows="3" placeholder="Any special goals, irrigation info, or constraints..."></textarea>
+
+      <!-- Auto context summary -->
+      <div id="contextDisplay" class="context-box loading">Fetching soil and weather data...</div>
+
+      <button type="submit" class="btn">Create Crop Room</button>
+      <p class="note">After creation, you’ll be redirected to your Crop Room summary page.</p>
+    </form>
+  </div>
+
+  <script>
+    const contextDiv = document.getElementById("contextDisplay");
+
+    async function fetchContext() {
+      try {
+        const res = await fetch("/api/context-info");
+        const data = await res.json();
+
+        if (data.error) {
+          contextDiv.innerHTML = "⚠️ " + data.error;
+          return;
+        }
+
+        contextDiv.innerHTML = `
+          <strong>Region:</strong> ${data.region || "N/A"} <br>
+          <strong>Soil Type:</strong> ${data.soil_type || "Unknown"} (pH ${data.ph_level || "—"})<br>
+          <strong>Weather:</strong> ${data.weather_summary || "Unavailable"}<br>
+          <strong>Temp:</strong> ${data.avg_temp || "--"}°C |
+          <strong>Rainfall:</strong> ${data.rainfall || "--"} mm |
+          <strong>Humidity:</strong> ${data.humidity || "--"}%
+        `;
+        document.getElementById("soil_override").placeholder = data.soil_type || "Auto";
+      } catch (e) {
+        contextDiv.innerHTML = "⚠️ Unable to fetch soil/weather context.";
+      }
+    }
+
+    fetchContext();
+
+    document.getElementById("cropRoomForm").onsubmit = async (e) => {
+      e.preventDefault();
+      const payload = {
+        chosen_crop: document.getElementById("chosen_crop").value,
+        expectation: document.getElementById("expectation").value,
+        budget: document.getElementById("budget").value,
+        soil_override: document.getElementById("soil_override").value,
+        notes: document.getElementById("notes").value
+      };
+
+      const res = await fetch("/create-crop-room", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (data.status === "success") {
+        alert("✅ Crop Room Created Successfully!");
+        window.location.href = `/crop-room-result/${data.crop_id}`;
+      } else {
+        alert("❌ " + (data.error || "Failed to create crop room."));
+      }
+    };
+  </script>
+</body>
+
+</html>

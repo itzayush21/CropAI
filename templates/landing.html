@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CropAI | Smart Crop Advisor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Outfit", sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.2rem 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: transparent;
+            /* invisible background */
+            backdrop-filter: blur(0px);
+            /* no blur, pure transparency */
+            border-bottom: none;
+            z-index: 100;
+            transition: all 0.3s ease;
+        }
+
+        /* Optional: make navbar slightly visible on scroll */
+        .navbar.scrolled {
+            background: rgba(10, 25, 15, 0.4);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-logo {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #c4ff61;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-shadow: 0 0 8px rgba(196, 255, 97, 0.3);
+        }
+
+        .nav-logout {
+            background: linear-gradient(135deg, #c4ff61, #7affd8);
+            color: #0b1b11;
+            padding: 0.6rem 1.4rem;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(196, 255, 97, 0.4);
+        }
+
+
+
+        body {
+            background: #0e1811;
+            color: #f0f6f1;
+        }
+
+        /* HERO */
+        .hero {
+            min-height: 100vh;
+            background: linear-gradient(rgba(9, 18, 9, 0.7), rgba(9, 18, 9, 0.9)),
+                url('https://images.unsplash.com/photo-1528693404014-b13ebe6e723e?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1333') no-repeat center/cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: #e8f9e7;
+            padding: 2rem;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            color: #c4ff61;
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            max-width: 700px;
+            color: #d3e5cf;
+            line-height: 1.6;
+            font-size: 1.2rem;
+        }
+
+        .hero-buttons {
+            margin-top: 2.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .hero-buttons button {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(183, 255, 89, 0.3);
+            color: #c4ff61;
+            font-weight: 600;
+            padding: 0.6rem 1.3rem;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            letter-spacing: 0.3px;
+            backdrop-filter: blur(8px);
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .hero-buttons button:hover {
+            background: linear-gradient(135deg, #c4ff61, #7affd8);
+            color: #0b1b12;
+            transform: translateY(-3px);
+            box-shadow: 0 0 18px rgba(183, 255, 89, 0.35);
+        }
+
+        .hero-buttons button:active {
+            transform: scale(0.97);
+            box-shadow: 0 0 10px rgba(183, 255, 89, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .hero-buttons button {
+                font-size: 0.9rem;
+                padding: 0.6rem 1.1rem;
+            }
+        }
+
+        /* SECTION COMMONS */
+        section {
+            padding: 5rem 8%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-heading {
+            text-align: center;
+            font-size: 2rem;
+            color: #c4ff61;
+            margin-bottom: 3rem;
+        }
+
+        /* CROP ROOM */
+        .crop-room-section {
+            background:
+                linear-gradient(140deg, rgba(15, 25, 20, 0.88), rgba(25, 45, 30, 0.92)),
+                url('https://images.unsplash.com/photo-1489065094455-c2d576ff27a0?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170') no-repeat center center/cover;
+            color: #f0f6f0;
+            padding: 6rem 8%;
+            position: relative;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            background-attachment: fixed;
+            /* gives subtle parallax feel */
+            background-blend-mode: overlay;
+            /* enhances texture harmony */
+            min-height: 100vh;
+        }
+
+        .crop-room-section::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(12, 20, 14, 0.6), rgba(10, 15, 10, 0.9));
+            z-index: 0;
+        }
+
+        .crop-room-container {
+            position: relative;
+            z-index: 5;
+        }
+
+        .crop-room-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .crop-room-header h2 {
+            font-size: 2.4rem;
+            color: #b7ff59;
+            margin-bottom: 0.8rem;
+        }
+
+        .crop-room-header p {
+            color: #cfd9cc;
+            font-size: 1rem;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* 🌾 Grid Layout */
+        .crop-room-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2.5rem;
+            justify-items: center;
+        }
+
+        /* Room Card Common */
+        .room-card {
+            position: relative;
+            width: 100%;
+            max-width: 350px;
+            height: 260px;
+            border-radius: 20px;
+            overflow: hidden;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(183, 255, 89, 0.2);
+            box-shadow: 0 4px 25px rgba(0, 0, 0, 0.25);
+            cursor: pointer;
+            transition: all 0.35s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .room-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 0 25px rgba(183, 255, 89, 0.25);
+        }
+
+        /* Active Room Card (with background image) */
+        .active-room .room-bg {
+            position: absolute;
+            inset: 0;
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+            transition: transform 0.4s ease;
+        }
+
+        .active-room:hover .room-bg {
+            transform: scale(1.1);
+        }
+
+        .active-room .room-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.7));
+            z-index: 2;
+        }
+
+        .room-content {
+            position: relative;
+            z-index: 5;
+            color: #eaf9e6;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        .room-content h3 {
+            font-size: 1.4rem;
+            color: #b7ff59;
+            margin-bottom: 0.5rem;
+        }
+
+        .room-content p {
+            font-size: 0.95rem;
+            color: #d6e5d2;
+            margin-bottom: 0.3rem;
+        }
+
+        .room-content button {
+            background: linear-gradient(135deg, #b7ff59, #7affd8);
+            color: #0a1b1b;
+            border: none;
+            border-radius: 25px;
+            padding: 0.5rem 1.3rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .room-content button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(183, 255, 89, 0.5);
+        }
+
+        /* Add New Room Card */
+        .add-room {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px dashed rgba(183, 255, 89, 0.4);
+            color: #b7ff59;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .add-room:hover {
+            background: rgba(183, 255, 89, 0.1);
+            box-shadow: 0 0 25px rgba(183, 255, 89, 0.25);
+        }
+
+        .plus-sign {
+            font-size: 3rem;
+            font-weight: 600;
+            line-height: 1;
+        }
+
+        .add-room p {
+            color: #cdebc2;
+            font-size: 0.95rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .room-card {
+                max-width: 100%;
+                height: 230px;
+            }
+        }
+
+        /* MODULE SECTIONS - PUZZLE STYLE */
+        /* ---------------- MODULE SECTIONS WITH BACKGROUND IMAGES ---------------- */
+        .module-section {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 4rem;
+            color: #eaf9e6;
+            overflow: hidden;
+            padding: 5rem 8%;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            flex-wrap: wrap;
+            transition: all 0.4s ease;
+        }
+
+        /* Section Overlay */
+        .module-section::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            backdrop-filter: blur(6px);
+            z-index: 1;
+        }
+
+        /* Section Content */
+        .module-text,
+        .module-img {
+            position: relative;
+            z-index: 5;
+            flex: 1 1 45%;
+        }
+
+        .module-text h2 {
+            color: #c4ff61;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .module-text p {
+            color: #d9e7d6;
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 1.5rem;
+            max-width: 500px;
+        }
+
+        .module-text button {
+            background: linear-gradient(135deg, #c4ff61, #7affd8);
+            color: #0a1b1b;
+            border: none;
+            border-radius: 25px;
+            padding: 0.7rem 1.6rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .module-text button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 15px #b7ff59;
+        }
+
+        /* Image Container */
+        .module-img {
+            height: 400px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.05);
+            filter: brightness(0.6) contrast(1.05); /* reduced brightness */
+            
+        }
+
+        .module-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .module-img:hover img {
+            transform: scale(1.08);
+        }
+
+        /* Alternating Layout (Puzzle Pattern) */
+        .module-section:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        /* 🌾 Unique Backgrounds for Each Module */
+        #crop-suggestor {
+            background: linear-gradient(180deg, rgba(8, 15, 8, 0.85), rgba(8, 15, 8, 0.9)),
+                url('https://plus.unsplash.com/premium_photo-1661854008793-8ce54b2e622b?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1169') no-repeat center center/cover;
+        }
+
+        #fertilizer {
+            background: linear-gradient(180deg, rgba(8, 15, 8, 0.85), rgba(8, 15, 8, 0.9)),
+                url('https://images.unsplash.com/photo-1709633644385-e4e51e5646f1?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170') no-repeat center center/cover;
+        }
+
+        #pest {
+            background: linear-gradient(180deg, rgba(8, 15, 8, 0.85), rgba(8, 15, 8, 0.9)),
+                url('https://plus.unsplash.com/premium_photo-1661880357659-aded9e1b554d?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1299') no-repeat center center/cover;
+        }
+
+        #finance {
+            background: linear-gradient(180deg, rgba(8, 15, 8, 0.85), rgba(8, 15, 8, 0.9)),
+                url('https://images.unsplash.com/photo-1673538064334-72dcb3cbf181?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1170') no-repeat center center/cover;
+        }
+
+        #disease {
+            background: linear-gradient(180deg, rgba(8, 15, 8, 0.85), rgba(8, 15, 8, 0.9)),
+                url('https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=1600&q=80') no-repeat center center/cover;
+        }
+
+        /* Responsive Behavior */
+        @media (max-width: 900px) {
+            .module-section {
+                flex-direction: column !important;
+                text-align: center;
+                padding: 4rem 5%;
+            }
+
+            .module-text {
+                max-width: 100%;
+            }
+
+            .module-img {
+                width: 100%;
+                height: 300px;
+            }
+        }
+
+        /* 🌿 Specific internal (side) images for each module */
+        #crop-suggestor .module-img img {
+            content: url('https://plus.unsplash.com/premium_photo-1661854008793-8ce54b2e622b?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1169');
+            /* crop field close-up */
+        }
+
+        #fertilizer .module-img img {
+            content: url('https://images.unsplash.com/photo-1709633644385-e4e51e5646f1?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=50&w=850');
+            /* fertilizer or soil texture */
+        }
+
+        #pest .module-img img {
+            content: url('https://plus.unsplash.com/premium_photo-1661880357659-aded9e1b554d?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=800');
+            /* pest or leaves macro */
+        }
+
+        #finance .module-img img {
+            content: url('https://images.unsplash.com/photo-1673538064334-72dcb3cbf181?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=800');
+            /* finance planning sheet */
+        }
+
+        #disease .module-img img {
+            content: url('https://images.unsplash.com/photo-1599771082200-88ef9f6e0c5b?auto=format&fit=crop&w=800&q=80');
+            /* diseased leaf close-up */
+        }
+
+        .module-section::before {
+  background: rgba(8, 18, 10, 0.35) !important; /* lighter overlay */
+  backdrop-filter: blur(2px) !important;        /* softer blur */
+}
+
+.module-text h2, 
+.module-text p, 
+.module-text button {
+  filter: brightness(1.3) contrast(1.1);
+  text-shadow: 0 0 8px rgba(0, 0, 0, 0.4);
+}
+
+.module-img img {
+  filter: brightness(1.15) contrast(1.05);
+}
+
+.module-section {
+  color: #f8fff5; /* brighter text color */
+}
+
+
+        footer {
+            background: rgba(0, 0, 0, 0.3);
+            color: #a9bba2;
+            text-align: center;
+            padding: 2rem 1rem;
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        @media (max-width: 900px) {
+            .module-section {
+                flex-direction: column !important;
+                padding: 4rem 5%;
+            }
+
+            .module-text,
+            .module-img {
+                flex: 1 1 100%;
+                text-align: center;
+            }
+
+            .module-text p {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="navbar">
+        <div class="nav-logo">🌾 CropAI</div>
+        <button class="nav-logout" onclick="window.location.href='/logout'">Logout</button>
+    </header>
+
+    <!-- HERO -->
+    <section class="hero">
+        <h1>Empowering Farmers with Intelligence 🌾</h1>
+        <p>CropAI combines AI, data, and agriculture to deliver smarter crop management, deeper soil insights, and
+            precision-driven growth strategies for modern farmers.</p>
+
+        <!-- 🔹 Module Quick Buttons -->
+        <div class="hero-buttons">
+            <button onclick="document.querySelector('#crop-suggestor').scrollIntoView({ behavior: 'smooth' })">🌾 Crop
+                Suggestor</button>
+            <button onclick="document.querySelector('#fertilizer').scrollIntoView({ behavior: 'smooth' })">💧
+                Fertilizer</button>
+            <button onclick="document.querySelector('#pest').scrollIntoView({ behavior: 'smooth' })">🐛 Pest
+                Control</button>
+            <button onclick="document.querySelector('#finance').scrollIntoView({ behavior: 'smooth' })">💰
+                Finance</button>
+            <button onclick="document.querySelector('#disease').scrollIntoView({ behavior: 'smooth' })">🧬
+                Disease</button>
+        </div>
+    </section>
+
+    <!-- CROP ROOM -->
+    <section class="crop-room-section">
+        <div class="crop-room-container">
+            <div class="crop-room-header">
+                <h2>Your Crop Rooms</h2>
+                <p>Manage your smart farming spaces, track progress, and create new crop environments instantly.</p>
+            </div>
+
+            <div class="crop-room-grid">
+                {% if crop_rooms %}
+                {% for room in crop_rooms %}
+                <div class="room-card active-room" onclick="window.location.href='/crop-room-result/{{ room.crop_id }}'">
+                    <div class="room-bg"
+                        style="background-image: url('https://images.unsplash.com/photo-1524594224038-0d7c5e5b6a29?auto=format&fit=crop&w=800&q=80');">
+                    </div>
+                    <div class="room-overlay"></div>
+                    <div class="room-content">
+                        <h3>{{ room.chosen_crop }}</h3>
+                        <p><strong>Create At:</strong> {{ room.created_at }}</p>
+                        <p><strong>Stage:</strong> {{ room.current_stage }}</p>
+                        <button>Open Room</button>
+                    </div>
+                </div>
+                {% endfor %}
+                {% endif %}
+
+                <!-- New Room Card -->
+                <div class="room-card add-room" onclick="window.location.href='/create-crop-room'">
+                    <div class="plus-sign">+</div>
+                    <p>Create New Crop Room</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODULE SECTIONS (PUZZLE STYLE) -->
+    <section class="module-section" id="crop-suggestor">
+        <div class="module-text">
+            <h2>🌾 Crop Suggestor</h2>
+            <p>Analyze your soil, climate, and water resources to discover the best-suited crops for your region —
+                scientifically backed and AI-powered.</p>
+            <button onclick="window.location.href='/module/crop-suggestor'">Explore</button>
+        </div>
+        <div class="module-img"><img alt="Crop Suggestor"></div>
+    </section>
+
+    <section class="module-section" id="fertilizer">
+        <div class="module-text">
+            <h2>💧 Fertilizer Advisor</h2>
+            <p>Get personalized fertilizer suggestions based on nutrient deficiencies and yield goals — reduce costs,
+                boost productivity.</p>
+            <button onclick="window.location.href='/module/fertilizer-suggestor'">Explore</button>
+        </div>
+        <div class="module-img"><img alt="Fertilizer Advisor"></div>
+    </section>
+
+    <section class="module-section" id="pest">
+        <div class="module-text">
+            <h2>🐛 Pest Control</h2>
+            <p>Leverage AI to detect and combat pest threats early. Upload images or let smart vision systems help
+                identify issues instantly.</p>
+            <button onclick="window.location.href='/module/pest-control'">Explore</button>
+        </div>
+        <div class="module-img"><img alt="Pest Control"></div>
+    </section>
+
+    <section class="module-section" id="finance">
+        <div class="module-text">
+            <h2>💰 Financial Planner</h2>
+            <p>Plan farm investments intelligently. CropAI predicts returns, calculates break-even points, and optimizes
+                every rupee.</p>
+            <button onclick="window.location.href='/module/finance'">Explore</button>
+        </div>
+        <div class="module-img"><img alt="Financial Planner"></div>
+    </section>
+
+    <section class="module-section" id="disease">
+        <div class="module-text">
+            <h2>🧬 Disease Detection</h2>
+            <p>Instantly detect plant diseases using AI-powered image models and get actionable treatment advice before
+                damage spreads.</p>
+            <button onclick="window.location.href='/module/disease-detection'">Explore</button>
+        </div>
+        <div class="module-img"><img alt="Disease Detection"></div>
+    </section>
+
+    <footer>
+        © 2025 CropAI — Smart Crop Advisor | Cultivating Intelligence for the Future 🌱
+    </footer>
+
+</body>
+
+</html>

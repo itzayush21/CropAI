@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CropAI — Smart Crop Advisor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Poppins", sans-serif;
+        }
+
+        body {
+            color: #fff;
+            background-color: #0f2027;
+            overflow-x: hidden;
+        }
+
+        nav {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 4rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        nav .logo {
+            font-size: 1.7rem;
+            font-weight: 700;
+            color: #b3ff00;
+            letter-spacing: 1px;
+        }
+
+        nav ul {
+            list-style: none;
+            display: flex;
+            gap: 2rem;
+        }
+
+        nav ul li a {
+            text-decoration: none;
+            color: #fff;
+            font-weight: 500;
+            transition: color .3s ease;
+        }
+
+        nav ul li a:hover {
+            color: #b3ff00;
+        }
+
+        .hero {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 100vh;
+            padding: 6rem 8%;
+            background: linear-gradient(135deg, rgba(0, 0, 0, .7), rgba(17, 83, 0, .7)),
+                url('https://images.unsplash.com/photo-1501004318641-b39e6451bec6?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat;
+        }
+
+        .hero-text {
+            max-width: 55%;
+            animation: fadeInLeft 1s ease-in-out;
+        }
+
+        .hero-text h1 {
+            font-size: 3.5rem;
+            color: #b3ff00;
+            font-weight: 700;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .hero-text p {
+            margin-top: 1rem;
+            font-size: 1.3rem;
+            color: #e6e6e6;
+            line-height: 1.6;
+        }
+
+        .hero-buttons {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1.5rem;
+        }
+
+        .btn {
+            padding: .8rem 1.8rem;
+            border: none;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: .3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #b3ff00, #70ffb3);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #b3ff00;
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 2px solid #b3ff00;
+            color: #b3ff00;
+        }
+
+        .btn-outline:hover {
+            background: #b3ff00;
+            color: #000;
+            transform: scale(1.05);
+        }
+
+        .login-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            padding: 2rem;
+            width: 320px;
+            animation: fadeInRight 1.2s ease;
+            box-shadow: 0 0 20px rgba(179, 255, 0, 0.1);
+        }
+
+        .login-card h3 {
+            color: #b3ff00;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .login-card input {
+            width: 100%;
+            padding: .8rem;
+            margin: .5rem 0;
+            border-radius: 10px;
+            border: none;
+            outline: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .login-card button {
+            width: 100%;
+            margin-top: 1rem;
+            padding: .8rem;
+            background: linear-gradient(135deg, #b3ff00, #70ffb3);
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            color: #000;
+            cursor: pointer;
+            transition: .3s ease;
+        }
+
+        .login-card button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #b3ff00;
+        }
+
+        .features {
+            background: linear-gradient(180deg, #1b3a33, #0f2027);
+            padding: 6rem 4rem;
+        }
+
+        .features h2 {
+            font-size: 2.6rem;
+            color: #b3ff00;
+            text-align: center;
+            margin-bottom: 3rem;
+            position: relative;
+            display: inline-block;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .features h2::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -10px;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 3px;
+            background: #b3ff00;
+            border-radius: 5px;
+        }
+
+        .feature-block {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 3rem;
+            margin-bottom: 4rem;
+        }
+
+        .feature-block img {
+            width: 45%;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(179, 255, 0, 0.2);
+        }
+
+        .feature-text {
+            width: 50%;
+        }
+
+        .feature-text h3 {
+            font-size: 1.8rem;
+            color: #b3ff00;
+            margin-bottom: 1rem;
+        }
+
+        .feature-text p {
+            font-size: 1.1rem;
+            color: #e0e0e0;
+            line-height: 1.8;
+        }
+
+        .about {
+            background: linear-gradient(180deg, #0f2027, #152f2b);
+            padding: 6rem 10%;
+            text-align: center;
+        }
+
+        .about h2 {
+            font-size: 2.5rem;
+            color: #b3ff00;
+            margin-bottom: 2rem;
+        }
+
+        .about p {
+            max-width: 900px;
+            margin: auto;
+            color: #e0e0e0;
+            font-size: 1.2rem;
+            line-height: 1.8;
+        }
+
+        .contact {
+            background: linear-gradient(180deg, #152f2b, #0f2027);
+            padding: 5rem 4rem;
+            text-align: center;
+        }
+
+        .contact h2 {
+            color: #b3ff00;
+            font-size: 2.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .contact p {
+            color: #ccc;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .contact button {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 30px;
+            background: linear-gradient(135deg, #b3ff00, #70ffb3);
+            color: #000;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .contact button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px #b3ff00;
+        }
+
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(40px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @media(max-width:900px) {
+            .hero {
+                flex-direction: column;
+                text-align: center;
+                padding-top: 8rem;
+            }
+
+            .hero-text {
+                max-width: 100%;
+                margin-bottom: 2rem;
+            }
+
+            .login-card {
+                width: 90%;
+            }
+
+            .feature-block {
+                flex-direction: column;
+            }
+
+            .feature-block img,
+            .feature-text {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav>
+        <div class="logo">🌾 CropAI</div>
+        <ul>
+            <li><a href="#">Home</a></li>
+            <li><a href="#modules">Modules</a></li>
+            <li><a href="#about">About</a></li>
+            <li><a href="#contact">Contact</a></li>
+        </ul>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-text">
+            <h1>Smart Crop Advisor with Generative AI 🌱</h1>
+            <p>
+                CropAI integrates AI, RAG, and satellite data to provide farmers with real-time
+                insights, crop recommendations, and financial intelligence — all through a
+                unified and intuitive dashboard.
+            </p>
+            <div class="hero-buttons">
+                <button class="btn btn-primary">Launch Dashboard</button>
+                <button class="btn btn-outline">Learn More</button>
+            </div>
+        </div>
+
+        <div class="login-card">
+            <h3>Member Login</h3>
+            <form action="/login" method="POST">
+                <input type="text" name="email" placeholder="Username or Email" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <button type="submit">Login</button>
+            </form>
+            <p style="text-align:center;margin-top:1rem;font-size:.9rem;color:#ccc;">
+                New user?
+                <a href="/register" style="color:#b3ff00;text-decoration:none;">Register</a>
+            </p>
+        </div>
+
+    </section>
+
+    <section class="features" id="modules">
+        <h2>Key Modules of CropAI</h2>
+
+        <div class="feature-block">
+            <div class="feature-text">
+                <h3>Crop Room Dashboard</h3>
+                <p>Monitor soil health, analyze crop progress, and get AI-powered insights in real-time for smarter
+                    farming decisions.</p>
+            </div>
+            <img src="\static\Screenshot 2025-11-04 152400.png" alt="Dashboard">
+        </div>
+
+        <div class="feature-block">
+            <img src="\static\Screenshot 2025-11-04 152400.png" alt="Crop Advisor">
+            <div class="feature-text">
+                <h3>Crop & Fertilizer Advisor</h3>
+                <p>AI and RAG models recommend best crops and fertilizer combinations suited to soil composition and
+                    weather patterns.</p>
+            </div>
+        </div>
+
+        <div class="feature-block">
+            <div class="feature-text">
+                <h3>Pest & Disease Diagnosis</h3>
+                <p>Identify crop diseases and pest infestations using computer vision and Gemini-powered models for
+                    early action.</p>
+            </div>
+            <img src="\static\Screenshot 2025-11-04 152400.png" alt="Pest Detection">
+        </div>
+
+        <div class="feature-block">
+            <img src="\static\Screenshot 2025-11-04 152400.png" alt="Financial Advisor">
+            <div class="feature-text">
+                <h3>Financial Analytics</h3>
+                <p>Predict costs, profits, and subsidies. Integrate PMFBY, KCC, and other government APIs for real-world
+                    financial insights.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="about" id="about">
+        <h2>About CropAI</h2>
+        <p>
+            CropAI bridges the gap between technology and agriculture by empowering farmers
+            with Generative AI-driven analytics. Using a fusion of soil databases, satellite
+            imagery, and predictive ML, CropAI helps farmers make better crop, fertilizer, and financial decisions.
+        </p>
+    </section>
+
+    <section class="contact" id="contact">
+        <h2>Get in Touch</h2>
+        <p>Have questions, collaboration ideas, or want to try CropAI for your district?</p>
+        <button>Contact Our Team</button>
+    </section>
+</body>
+
+</html>

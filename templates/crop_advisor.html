@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CropAI | Crop Advisor</title>
+    <style>
+        :root {
+            --bg1: #0f2027;
+            --bg2: #203a43;
+            --bg3: #2c5364;
+            --glass: rgba(255, 255, 255, 0.12);
+            --border: rgba(255, 255, 255, 0.18);
+            --accent: #b3ff00;
+            --accent2: #70ffb3;
+            --text: #f5f7f8;
+            --muted: #cfd8dc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Poppins", sans-serif;
+        }
+
+        body {
+            color: var(--text);
+            font-size: 1.1rem;
+            line-height: 1.8;
+            min-height: 100vh;
+            background: url('https://images.unsplash.com/photo-1495107334309-fcf20504a5ab?auto=format&fit=crop&q=80&w=1170') center/cover no-repeat;
+            backdrop-filter: blur(8px);
+            display: grid;
+            grid-template-rows: auto 1fr;
+            padding-bottom: 2rem;
+        }
+
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            padding: 1.4rem 3rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: transparent;
+            backdrop-filter: blur(20px);
+        }
+
+        .logo {
+            font-weight: 700;
+            color: var(--accent);
+            font-size: 1.6rem;
+            letter-spacing: 0.8px;
+        }
+
+        .hdr-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            border: none;
+            cursor: pointer;
+            padding: 0.9rem 1.6rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 1.05rem;
+            transition: 0.3s ease;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+
+        .btn-cta {
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            color: #000;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 10px rgba(179, 255, 0, 0.4);
+        }
+
+        .wrap {
+            display: grid;
+            grid-template-columns: 430px 1fr;
+            gap: 2.5rem;
+            padding: 2.5rem 3rem;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .card {
+            background: rgba(15, 25, 30, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 24px;
+            padding: 2rem 1.8rem;
+            backdrop-filter: blur(18px);
+            box-shadow: 0 8px 45px rgba(0, 0, 0, 0.45),
+                inset 0 0 25px rgba(179, 255, 0, 0.05);
+        }
+
+        .card h3 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .card p.hint {
+            color: var(--muted);
+            font-size: 1rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.2rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .row-1 {
+            display: grid;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+
+        label {
+            font-size: 1rem;
+            color: var(--muted);
+            margin-bottom: 0.35rem;
+            display: block;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 1rem 1.1rem;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text);
+            font-size: 1.05rem;
+            outline: none;
+            transition: 0.3s ease;
+        }
+
+        input::placeholder,
+        textarea::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        textarea {
+            min-height: 110px;
+            resize: vertical;
+        }
+
+        select {
+            appearance: none;
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        select option {
+            background-color: #1b2b34;
+            color: #f5f7f8;
+            font-size: 1rem;
+        }
+
+        input:hover,
+        select:hover,
+        textarea:hover {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px rgba(179, 255, 0, 0.4);
+        }
+
+        .submit-wrap {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.4rem;
+        }
+
+        .chat {
+            display: grid;
+            grid-template-rows: 1fr auto;
+            gap: 1.4rem;
+            min-height: calc(100vh - 120px);
+            max-height: calc(100vh - 160px);
+        }
+
+        .chat-window {
+            background: rgba(15, 25, 30, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 24px;
+            padding: 1.8rem;
+            overflow-y: auto;
+            backdrop-filter: blur(18px);
+            box-shadow: 0 8px 45px rgba(0, 0, 0, 0.45),
+                inset 0 0 25px rgba(179, 255, 0, 0.05);
+            font-size: 1.1rem;
+            line-height: 1.8;
+            scroll-behavior: smooth;
+        }
+
+        .chat-window::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .chat-window::-webkit-scrollbar-thumb {
+            background: rgba(179, 255, 0, 0.4);
+            border-radius: 8px;
+        }
+
+        .chat-window::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .msg {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .msg-user {
+            justify-content: flex-end;
+        }
+
+        .bubble {
+            max-width: 80%;
+            padding: 1.1rem 1.3rem;
+            border-radius: 18px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.1);
+            font-size: 1.1rem;
+        }
+
+        .bubble.user {
+            background: linear-gradient(135deg, rgba(179, 255, 0, .25), rgba(112, 255, 179, .18));
+            border-color: rgba(179, 255, 0, .35);
+        }
+
+        .bubble.bot {
+            background: rgba(0, 0, 0, 0.25);
+        }
+
+        .crop-card {
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 1.2rem 1.3rem;
+            margin: 0.8rem 0;
+            background: rgba(255, 255, 255, 0.07);
+            font-size: 1.05rem;
+        }
+
+        .chat-input {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 1rem;
+        }
+
+        .chat-input input {
+            padding: 1.1rem 1.2rem;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            background: rgba(20, 25, 25, 0.6);
+            color: var(--text);
+            font-size: 1.1rem;
+            transition: 0.3s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .chat-input input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 10px rgba(179, 255, 0, 0.4);
+        }
+
+        /* Modal animation */
+        #historyModal {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #historyModal.show {
+            opacity: 1;
+            display: flex;
+        }
+
+        @media (max-width: 1024px) {
+            .wrap {
+                grid-template-columns: 1fr;
+            }
+
+            body {
+                font-size: 1rem;
+            }
+
+            .card,
+            .chat-window {
+                padding: 1.2rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="logo">🌾 CropAI — Crop Advisor</div>
+        <div class="hdr-actions">
+            <button class="btn btn-ghost" onclick="location.href='/'">Home</button>
+            <button class="btn btn-cta" onclick="location.href='/dashboard'">Dashboard</button>
+        </div>
+    </header>
+
+    <main class="wrap">
+        <!-- Context Form -->
+        <section class="card">
+            <h3>Context & Preferences</h3>
+            <p class="hint">Add optional preferences. We already use your district, state, soil & weather.</p>
+            <div class="row">
+                <div>
+                    <label>Season</label>
+                    <select id="season">
+                        <option value="">Auto</option>
+                        <option>Kharif</option>
+                        <option>Rabi</option>
+                        <option>Zaid</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Irrigation Availability</label>
+                    <select id="irrigation">
+                        <option value="">Auto</option>
+                        <option>Rain-fed</option>
+                        <option>Tube well</option>
+                        <option>Canal</option>
+                        <option>Drip</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div>
+                    <label>Budget (₹)</label>
+                    <input id="budget" type="number" min="0" step="0.01" placeholder="e.g., 50000" />
+                </div>
+                <div>
+                    <label>Market Preference</label>
+                    <select id="market_pref">
+                        <option value="">Auto</option>
+                        <option>Local demand</option>
+                        <option>Export potential</option>
+                        <option>High-value niche</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div>
+                    <label>Risk Tolerance</label>
+                    <select id="risk">
+                        <option value="">Medium</option>
+                        <option>Low</option>
+                        <option>High</option>
+                    </select>
+                </div>
+                <div>
+                    <label>Land Area Override (acres)</label>
+                    <input id="land_area_override" type="number" min="0" step="0.01" placeholder="Auto from profile" />
+                </div>
+            </div>
+            <div class="row-1">
+                <div>
+                    <label>Additional Notes</label>
+                    <textarea id="notes"
+                        placeholder="Any constraints, tools, labor availability, prior crops, organic preference, etc."></textarea>
+                </div>
+            </div>
+            <div class="submit-wrap">
+                <button class="btn btn-cta" id="genBtn">Get Crop Suggestions</button>
+                <button class="btn btn-ghost" id="clearBtn">Clear Chat</button>
+                <button class="btn btn-ghost" id="historyBtn">Show History</button>
+            </div>
+        </section>
+
+        <!-- Chat Area -->
+        <section class="chat">
+            <div id="chatWindow" class="chat-window">
+                <div class="msg">
+                    <div class="bubble bot">
+                        Hi! I’ll suggest the top 5 crops for your location. You can add preferences (budget, season,
+                        irrigation) on
+                        the left.
+                        Then press <span class="chip">Get Crop Suggestions</span>.
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input">
+                <input id="userPrompt" type="text"
+                    placeholder="Ask a follow-up (e.g., 'optimize for low water' or 'compare #2 vs #4')" />
+                <button class="btn btn-cta" id="sendBtn">Send</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- History Modal -->
+    <div id="historyModal" style="
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    backdrop-filter: blur(6px);
+">
+        <div style="
+      background: rgba(15,25,30,0.95);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 16px;
+      width: 85%;
+      max-width: 900px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+      color: #fff;
+  ">
+            <h3 style="color:#b3ff00; margin-bottom:1rem;">📜 Crop Suggestion History</h3>
+            <div id="historyContent" style="font-size:1rem;"></div>
+            <button id="closeHistory" class="btn btn-cta" style="margin-top:1rem;">Close</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const chatWindow = document.getElementById('chatWindow');
+            const genBtn = document.getElementById('genBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const sendBtn = document.getElementById('sendBtn');
+            const historyBtn = document.getElementById('historyBtn');
+            const userPrompt = document.getElementById('userPrompt');
+            const historyModal = document.getElementById('historyModal');
+            const closeHistory = document.getElementById('closeHistory');
+            const historyContent = document.getElementById('historyContent');
+
+            function addMsg(text, who = 'bot', html = false) {
+                const wrap = document.createElement('div');
+                wrap.className = 'msg ' + (who === 'user' ? 'msg-user' : '');
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble ' + (who === 'user' ? 'user' : 'bot');
+                if (html) bubble.innerHTML = text; else bubble.textContent = text;
+                wrap.appendChild(bubble);
+                chatWindow.appendChild(wrap);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+
+            async function fetchHistory() {
+                historyModal.classList.add('show');
+                historyModal.style.display = 'flex';
+                historyContent.innerHTML = '<div style="color:#ccc;">Fetching history...</div>';
+                try {
+                    const res = await fetch('/api/crop-advisor/history');
+                    const data = await res.json();
+                    if (!data.length) {
+                        historyContent.innerHTML = '<div style="color:#ccc;">No history found.</div>';
+                        return;
+                    }
+                    historyContent.innerHTML = data.map((r, i) => `
+            <details style="margin-bottom:1rem;background:rgba(255,255,255,0.05);border-radius:10px;padding:0.8rem;">
+              <summary style="cursor:pointer;color:#b3ff00;font-size:1.1rem;">#${i + 1} — ${r.district}, ${r.state}</summary>
+              ${r.suitable_crops?.map(c => `
+                <div class="crop-card" style="font-size:0.95rem;">
+                  <h4>${c.crop}</h4>
+                  <div>${c.rationale}</div>
+                </div>`).join('')}
+              <div style="margin-top:0.4rem;"><strong>Conclusion:</strong> ${r.reasoning}</div>
+            </details>
+          `).join('');
+                } catch {
+                    historyContent.innerHTML = '<div style="color:red;">Error fetching history.</div>';
+                }
+            }
+
+            async function callAdvisor(extra_user_query = null) {
+                const payload = {
+                    context_overrides: {
+                        season: document.getElementById('season').value,
+                        irrigation: document.getElementById('irrigation').value,
+                        budget: document.getElementById('budget').value,
+                        market_pref: document.getElementById('market_pref').value,
+                        risk: document.getElementById('risk').value,
+                        land_area_override: document.getElementById('land_area_override').value,
+                        notes: document.getElementById('notes').value,
+                    },
+                    user_query: extra_user_query
+                };
+                try {
+                    const res = await fetch('/api/crop-advisor', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (data.error) return addMsg('Error: ' + data.error, 'bot');
+                    const html = `
+  <div class="dim">📍 <strong>${data.district}</strong>, ${data.state}</div>
+  ${data.suitable_crops.map((c, i) => `
+    <div class="crop-card">
+      <h4>🌱 #${i + 1} ${c.crop}</h4>
+      <div class="dim">${c.season || ''} • Water: ${c.water_need || '-'} • Yield: ${c.expected_yield || '-'}</div>
+      <p><strong>Rationale:</strong> ${c.rationale}</p>
+      <p><strong>Steps:</strong> ${c.steps}</p>
+      <p><strong>Fertilizers:</strong> ${c.fertilizers}</p>
+      <p><strong>Risks:</strong> ${c.risks}</p>
+      <p><strong>Market Tips:</strong> ${c.market_tips}</p>
+      <p><strong>Timeframe:</strong> ${c.timeframe}</p>
+    </div>
+  `).join('')}
+  <div style="margin-top:1rem;">
+    <strong>🌾 Overall Reasoning:</strong> ${data.reasoning}
+  </div>
+`;
+                    addMsg(html, 'bot', true);
+                } catch {
+                    addMsg('Something went wrong. Please try again.', 'bot');
+                }
+            }
+
+            genBtn.addEventListener('click', () => {
+                addMsg('Generating crop suggestions with current preferences…', 'user');
+                callAdvisor();
+            });
+
+            clearBtn.addEventListener('click', () => chatWindow.innerHTML = '');
+
+            sendBtn.addEventListener('click', () => {
+                const q = userPrompt.value.trim();
+                if (!q) return;
+                addMsg(q, 'user');
+                userPrompt.value = '';
+                callAdvisor(q);
+            });
+
+            userPrompt.addEventListener('keydown', e => e.key === 'Enter' && sendBtn.click());
+            historyBtn.addEventListener('click', fetchHistory);
+            closeHistory.addEventListener('click', () => {
+                historyModal.classList.remove('show');
+                setTimeout(() => historyModal.style.display = 'none', 300);
+            });
+        });
+    </script>
+</body>
+
+</html>

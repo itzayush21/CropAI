@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ room.chosen_crop }} | Crop Room Dashboard</title>
+
+  <style>
+    :root {
+      --accent: #b3ff00;
+      --accent2: #70ffb3;
+      --bg1: #0f2027;
+      --bg2: #203a43;
+      --bg3: #2c5364;
+      --text: #f5f5f5;
+      --muted: #cfd8dc;
+      --border: rgba(255,255,255,0.15);
+    }
+
+    body {
+      font-family: "Poppins", sans-serif;
+      margin: 0;
+      color: var(--text);
+      background: linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3));
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-bottom: 3rem;
+    }
+
+    header {
+      background: rgba(15,25,30,0.85);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.2rem 3rem;
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    header h1 {
+      color: var(--accent);
+      font-size: 1.7rem;
+      margin: 0;
+    }
+
+    header button {
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #000;
+      border: none;
+      padding: 0.8rem 1.4rem;
+      border-radius: 999px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    main {
+      padding: 2rem 3rem;
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 2rem;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 1.5rem 2rem;
+      backdrop-filter: blur(15px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      margin-bottom: 1.5rem;
+    }
+
+    h2 {
+      color: var(--accent);
+      margin-bottom: 0.6rem;
+    }
+
+    h3 {
+      color: var(--accent2);
+      margin-top: 1.5rem;
+      margin-bottom: 0.4rem;
+    }
+
+    .section {
+      margin-bottom: 2rem;
+    }
+
+    pre {
+      background: rgba(255,255,255,0.08);
+      padding: 1rem;
+      border-radius: 10px;
+      color: var(--muted);
+      overflow-x: auto;
+      font-size: 0.9rem;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .btn-small {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--accent);
+      padding: 0.5rem 1rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      margin-top: 0.6rem;
+      transition: 0.2s ease;
+    }
+
+    .btn-small:hover {
+      background: rgba(179,255,0,0.1);
+    }
+
+    .timeline {
+      background: rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 1rem;
+      max-height: 250px;
+      overflow-y: auto;
+      font-size: 0.95rem;
+    }
+
+    .timeline-item {
+      border-left: 3px solid var(--accent);
+      padding-left: 0.8rem;
+      margin-bottom: 1rem;
+    }
+
+    .note {
+      background: rgba(255,255,255,0.05);
+      padding: 0.8rem;
+      border-radius: 10px;
+      margin-bottom: 0.8rem;
+    }
+
+    .insight-box {
+      background: rgba(255,255,255,0.07);
+      border-left: 4px solid var(--accent);
+      padding: 1rem;
+      border-radius: 10px;
+      margin-top: 0.6rem;
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    .btn-wide {
+      width: 100%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none;
+      padding: 1rem;
+      color: #000;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 1rem;
+      margin-top: 1.2rem;
+    }
+
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>🌿 Crop Room: {{ room.chosen_crop }}</h1>
+    <button onclick="window.location.href='/dashboard'">Back to My Rooms</button>
+  </header>
+
+  <main>
+    <!-- LEFT COLUMN -->
+    <section>
+      <div class="card">
+        <h2>🌍 Context Overview</h2>
+        <p><strong>Region:</strong> {{ room.region or 'N/A' }}</p>
+        <p><strong>Soil:</strong> {{ room.soil_description or 'Unknown' }}</p>
+        <p><strong>Weather:</strong> {{ room.weather_context or 'Not available' }}</p>
+        <p><strong>Land Area:</strong> {{ room.land_area or 'Not specified' }} acres</p>
+      </div>
+
+      <div class="card">
+        <h2>💡 Crop Suggestion & Insights</h2>
+        <div class="insight-box">
+          {{ room.suggestion.summary if room.suggestion else "No suggestion generated yet." }}
+        </div>
+        {% if room.suggestion and room.suggestion.key_recommendations %}
+          <h3>Recommendations:</h3>
+          <ul>
+            {% for rec in room.suggestion.key_recommendations %}
+              <li>{{ rec }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+
+      <div class="card">
+        <h2>📊 Budget & Yield</h2>
+        <pre>{{ room.budget_breakdown | tojson(indent=2) }}</pre>
+      </div>
+
+      <div class="card">
+        <h2>🧪 Fertilizer Suggestions</h2>
+        <pre>{{ room.fertilizers_suggested | tojson(indent=2) or "Not generated yet." }}</pre>
+        <button class="btn-small">Generate via AI</button>
+      </div>
+
+      <div class="card">
+        <h2>🐛 Pest Guidelines</h2>
+        <pre>{{ room.pest_guideline | tojson(indent=2) or "Not generated yet." }}</pre>
+        <button class="btn-small">Run Pest Analysis</button>
+      </div>
+
+      <div class="card">
+        <h2>💰 Financial Advisor</h2>
+        <pre>{{ room.financial_suggestion | tojson(indent=2) or "No financial data yet." }}</pre>
+        <button class="btn-small">Get Financial Advice</button>
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN -->
+    <aside>
+      <div class="card">
+        <h2>🕒 Timeline</h2>
+        <div class="timeline">
+          {% for item in room.timeline %}
+            <div class="timeline-item">
+              <strong>{{ item.event }}</strong><br>
+              <small>{{ item.timestamp }}</small><br>
+              <span>{{ item.details }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>📜 Previous Steps</h2>
+        <pre>{{ room.previous_steps | tojson(indent=2) or "No past steps." }}</pre>
+      </div>
+
+      <div class="card">
+        <h2>🚀 Current Stage</h2>
+        <p>{{ room.current_stage or "Initial Setup" }}</p>
+        <h3>Next Step</h3>
+        <p>{{ room.next_step or "No next step predicted yet." }}</p>
+      </div>
+
+      <div class="card">
+        <h2>📝 Notes</h2>
+        {% if room.user_notes %}
+          {% for note in room.user_notes %}
+            <div class="note">
+              <strong>{{ note.created }}</strong><br>{{ note.note }}
+            </div>
+          {% endfor %}
+        {% else %}
+          <p>No notes yet.</p>
+        {% endif %}
+        <button class="btn-small" onclick="openNoteModal()">Add Note</button>
+      </div>
+
+      <div class="card">
+        <h2>🤖 AI Doubt Solver</h2>
+        <div id="aiChatBox" style="background:rgba(255,255,255,0.08);border-radius:10px;padding:1rem;min-height:120px;font-size:0.95rem;">Ask your crop-related doubts here.</div>
+        <input id="userQuery" placeholder="Type your question..." style="width:100%;margin-top:0.8rem;padding:0.8rem;border-radius:8px;border:1px solid var(--border);background:rgba(255,255,255,0.08);color:#fff;">
+        <button class="btn-wide" id="askBtn">Ask AI</button>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    // AI Doubt Chat
+    const askBtn = document.getElementById("askBtn");
+    const userQuery = document.getElementById("userQuery");
+    const chatBox = document.getElementById("aiChatBox");
+
+    askBtn.onclick = async () => {
+      const q = userQuery.value.trim();
+      if (!q) return;
+      chatBox.innerHTML += `<div><strong>You:</strong> ${q}</div>`;
+      userQuery.value = "";
+
+      const res = await fetch(`/api/ai-doubt/{{ room.crop_id }}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q })
+      });
+      const data = await res.json();
+      chatBox.innerHTML += `<div style="margin-top:0.4rem;"><strong>AI:</strong> ${data.reply || data.error}</div>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+    };
+
+    // Add Note placeholder (to be implemented later)
+    function openNoteModal() {
+      alert("📝 Note addition coming soon.");
+    }
+  </script>
+</body>
+</html>
