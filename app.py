@@ -3,11 +3,15 @@ from config import Config
 from models import db
 from auth.auth_client import create_supabase_client
 from module.preprocessing import enrich_user_data,get_lat_lon_from_location
+from sqlalchemy.orm.attributes import flag_modified
 from models import db, User, SoilDB, WeatherDB, CropSuggestionDB, FertilizerSuggestionDB, PestControlDB, FinancialAdvisorDB, CropRoom
 from module.pest_control_genai import generate_pest_control_advice
 from module.genai_crop_advisor import generate_crop_suggestions
 from module.fertilizer_genai import generate_fertilizer_recommendations
 from module.financial_genai import generate_financial_advice
+from module.crop_suggestion_ai import generate_crop_suggestion
+from module.gemini_crop_pipeline import generate_initial_step, generate_next_step, format_step_for_db
+from module.gemini_advisors import get_fertilizer_suggestions, get_pest_guidelines, get_financial_advice, get_ai_doubt_response
 import uuid
 import math
 import json
@@ -611,104 +615,106 @@ def create_crop_room_page():
 
 @app.route("/create-crop-room", methods=["GET", "POST"])
 def create_crop_room():
-    """
-    Handles both:
-    - GET: returns context info (soil/weather)
-    - POST: creates a new crop room with base context & redirects to /crop-room-result/<crop_id>
-    """
+    """Handles creation of a new crop room and initialization of AI-based steps."""
+
     # ✅ Ensure user logged in
     if "user" not in session:
         return redirect(url_for("login"))
 
-    # Fetch user profile
+    # Fetch logged-in user profile
     user = User.query.filter_by(userid=session["user"]["id"]).first()
     if not user:
         return jsonify({"error": "User not found"}), 404
 
-    # 🟩 Step 1: Return context info (GET)
-    if request.method == "GET" and request.args.get("info") == "true":
-        soil_data = SoilDB.query.filter_by(district=user.district, state=user.state).first()
-        weather_data = WeatherDB.query.filter_by(district=user.district, state=user.state).first()
-
-        context = {
-            "region": f"{user.district}, {user.state}",
-            "soil_type": soil_data.soil_type if soil_data else "Unknown",
-            "ph_level": soil_data.ph_level if soil_data else None,
-            "weather_summary": weather_data.weather_summary if weather_data else "Not available",
-            "avg_temp": weather_data.avg_temp if weather_data else None,
-            "rainfall": weather_data.rainfall if weather_data else None,
-            "humidity": weather_data.humidity if weather_data else None
-        }
-        return jsonify(context)
-
-    # 🟦 Step 2: Render the creation form (GET)
+    # 🟦 Step 1: Render creation form (GET)
     if request.method == "GET":
         return render_template("create_crop_room.html")
 
-    # 🟨 Step 3: Handle form submission (POST)
+    # 🟨 Step 2: Handle new crop room creation (POST)
     if request.method == "POST":
         data = request.get_json()
         if not data:
             return jsonify({"error": "Invalid form data"}), 400
 
-        # Fetch soil & weather data for the user’s region
+        # 🌍 Fetch environmental data for region
         soil_data = SoilDB.query.filter_by(district=user.district, state=user.state).first()
         weather_data = WeatherDB.query.filter_by(district=user.district, state=user.state).first()
 
-        # 🌍 Contextual details
         region = f"{user.district}, {user.state}"
         soil_type = data.get("soil_override") or (soil_data.soil_type if soil_data else "Unknown")
-        weather_context = weather_data.weather_summary if weather_data else "Not available"
+        weather_summary = weather_data.weather_summary if weather_data else "Not available"
 
-        # 🌾 Placeholder AI-based suggestion
-        suggestion = {
-            "summary": f"{data.get('chosen_crop')} is suitable for {region} based on soil ({soil_type}) and weather.",
-            "key_recommendations": [
-                "Ensure proper irrigation at vegetative stage.",
-                "Monitor pest activity bi-weekly.",
-                "Add organic compost before sowing."
-            ]
-        }
+        # 🧠 Additional user context
+        soil_summary = user.soil_summary or "No soil summary available"
+        land_summary = user.land_summary or "No land summary available"
 
-        # 🕒 Initialize timeline
-        timeline_entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "event": "Crop Room Created",
-            "details": f"Initial analysis generated for {data.get('chosen_crop')}."
-        }
+        # 🌾 Generate AI-based initial and next steps (via Gemini 2.0)
+        initial_step = generate_initial_step(
+            chosen_crop=data.get("chosen_crop"),
+            soil_type=soil_type,
+            region=region,
+            weather_summary=weather_summary,
+            soil_summary=soil_summary,
+            land_summary=land_summary
+        )
 
-        # Create the new CropRoom record
+        next_step = generate_next_step(
+            chosen_crop=data.get("chosen_crop"),
+            soil_type=soil_type,
+            region=region,
+            weather_summary=weather_summary,
+            current_stage=initial_step["title"],
+            soil_summary=soil_summary,
+            land_summary=land_summary
+        )
+
+        # ✅ Create new CropRoom record
         new_crop_room = CropRoom(
             username=user.name,
             chosen_crop=data.get("chosen_crop"),
             region=region
         )
 
+        # 🔹 Assign contextual and AI data
         new_crop_room.soil_description = soil_type
-        new_crop_room.weather_context = weather_context
-        new_crop_room.land_area = user.land_area or None
-        new_crop_room.suggestion = suggestion
-        new_crop_room.current_stage = "Initial Setup"
-        new_crop_room.timeline = [timeline_entry]
+        new_crop_room.weather_context = weather_summary
+        new_crop_room.land_area = user.land_area
+        new_crop_room.suggestion = None
+
+        # 🔹 Set initial AI stages
+        new_crop_room.current_stage = initial_step["title"]
+        new_crop_room.current_step = format_step_for_db(initial_step)
+        new_crop_room.next_step = format_step_for_db(next_step)
         new_crop_room.previous_steps = []
-        new_crop_room.user_notes = [{"created": datetime.utcnow().isoformat(), "note": data.get("notes", "")}]
+
+        # 🔹 Timeline tracking
+        new_crop_room.timeline = [{
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "event": "Crop Room Created",
+            "details": f"AI initialized with step: {initial_step['title']} → Next: {next_step['title']}."
+        }]
+
+        # 🔹 Optional data
+        new_crop_room.user_notes = [{
+    "created": datetime.now(timezone.utc).isoformat(),
+    "note": data.get("notes", "")
+}]
         new_crop_room.ai_doubt_history = []
         new_crop_room.budget_breakdown = {
             "estimated_budget": data.get("budget") or "Not provided",
             "expected_yield": data.get("expectation") or "N/A"
         }
 
-        # Save to DB
+        # 💾 Commit to DB
         db.session.add(new_crop_room)
         db.session.commit()
 
-        # ✅ Send response with redirect URL
+        # ✅ Return success + redirect URL
         return jsonify({
             "status": "success",
             "crop_id": new_crop_room.crop_id,
             "redirect_url": f"/crop-room-result/{new_crop_room.crop_id}"
         })
-
 
 
 
@@ -721,6 +727,273 @@ def crop_room_result(crop_id):
     if not room:
         return render_template("404.html"), 404
     return render_template("croproom.html", room=room)
+
+
+@app.route("/update-step/<crop_id>", methods=["POST"])
+def update_step(crop_id):
+    """Completes current step, promotes next, and generates a new next step via Gemini."""
+    
+    room = CropRoom.query.filter_by(crop_id=crop_id).first()
+    if not room:
+        return jsonify({"status": "error", "error": "Crop room not found"}), 404
+
+    user = User.query.filter_by(name=room.username).first()
+    if not user:
+        return jsonify({"status": "error", "error": "User not found"}), 404
+
+    # Ensure required fields exist
+    if not room.current_step or not room.next_step:
+        return jsonify({"status": "error", "error": "AI steps not initialized"}), 400
+
+    # 🧩 Step 1: Move current_step → previous_steps
+    if not room.previous_steps:
+        room.previous_steps = []
+    
+    room.previous_steps.append({
+        "step": room.current_step,
+        "completed_at": datetime.now(timezone.utc).isoformat()
+    })
+
+    # 🧩 Step 2: Promote next_step → current_step
+    room.current_step = room.next_step
+    room.current_stage = room.next_step.get("title", "Ongoing Stage")
+
+    # 🧩 Step 3: Generate new next_step from Gemini
+    try:
+        new_next = generate_next_step(
+            chosen_crop=room.chosen_crop,
+            soil_type=room.soil_description,
+            region=room.region,
+            weather_summary=room.weather_context,
+            current_stage=room.current_step.get("title"),
+            soil_summary=user.soil_summary or "N/A",
+            land_summary=user.land_summary or "N/A"
+        )
+        room.next_step = format_step_for_db(new_next)
+    except Exception as e:
+        print(f"[Gemini Error] Failed to generate next step: {e}")
+        room.next_step = format_step_for_db({
+            "title": "Next Stage Pending",
+            "description": "AI could not generate the next step. Try again later."
+        })
+
+    # 🧩 Step 4: Add a new timeline event
+    if not room.timeline:
+        room.timeline = []
+    room.timeline.append({
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "event": "Step Completed",
+        "details": f"Moved to '{room.current_stage}'. Next: '{room.next_step['title']}'."
+    })
+
+    # 🧩 Step 5: Save changes
+    db.session.commit()
+
+    # 🧩 Step 6: Return updated state to frontend
+    return jsonify({
+        "status": "success",
+        "current_step": room.current_step,
+        "next_step": room.next_step,
+        "previous_steps": room.previous_steps,
+        "timeline": room.timeline
+    })
+    
+
+# 🧪 Fertilizer AI
+@app.route("/api/fertilizer/<crop_id>", methods=["POST"])
+def api_fertilizer(crop_id):
+    """Generate context-aware fertilizer recommendations using Gemini AI."""
+    room = CropRoom.query.filter_by(crop_id=crop_id).first()
+    if not room:
+        return jsonify({"error": "Crop room not found"}), 404
+
+    user = User.query.filter_by(name=room.username).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # 🌍 Fetch soil and weather context
+    soil_data = SoilDB.query.filter_by(district=user.district, state=user.state).first()
+    weather_data = WeatherDB.query.filter_by(district=user.district, state=user.state).first()
+
+    context = {
+        "region": f"{user.district}, {user.state}",
+        "soil_type": soil_data.soil_type if soil_data else room.soil_description,
+        "ph_level": getattr(soil_data, "ph_level", "Unknown"),
+        "soil_summary": user.soil_summary or "No soil summary available.",
+        "land_summary": user.land_summary or "No land summary available.",
+        "avg_temp": getattr(weather_data, "avg_temp", "N/A"),
+        "humidity": getattr(weather_data, "humidity", "N/A"),
+        "rainfall": getattr(weather_data, "rainfall", "N/A"),
+        "weather_summary": getattr(weather_data, "weather_summary", room.weather_context),
+        "land_area": user.land_area or "Unknown",
+        "ndvi": user.ndvi or "N/A",
+        "ndwi": user.ndwi or "N/A"
+    }
+
+    ai_result = get_fertilizer_suggestions(
+        crop=room.chosen_crop,
+        context=context
+    )
+    #print(f"[DEBUG] AI Result: {ai_result}")
+    # ✅ Store and log
+    room.fertilizers_suggested = ai_result
+    room.timeline.append({
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "event": "AI Fertilizer Suggestions Generated",
+        "details": f"Generated using soil type '{context['soil_type']}' and rainfall '{context['rainfall']}'."
+    })
+    #print(f"[DEBUG] Fertilizer suggestions for crop_id {crop_id}: {ai_result}")
+    print("I am here")
+    db.session.commit()
+    print("------------------------------------------------------------")
+    print("Pest Control AI Result:")
+    print(f"contecxt: {context}")
+    print(f"ai_result: {ai_result}")
+    print("------------------------------------------------------------")
+    return jsonify({
+        "context_used": context,
+        "recommendations": ai_result
+    })
+
+
+# 🐛 Pest AI
+@app.route("/api/pest/<crop_id>", methods=["POST"])
+def api_pest(crop_id):
+    """Run AI pest risk detection and management advice."""
+    room = CropRoom.query.filter_by(crop_id=crop_id).first()
+    if not room:
+        return jsonify({"error": "Crop room not found"}), 404
+
+    user = User.query.filter_by(name=room.username).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    weather_data = WeatherDB.query.filter_by(district=user.district, state=user.state).first()
+    soil_data = SoilDB.query.filter_by(district=user.district, state=user.state).first()
+
+    context = {
+        "crop": room.chosen_crop,
+        "region": f"{user.district}, {user.state}",
+        "soil_type": soil_data.soil_type if soil_data else "Unknown",
+        "avg_temp": getattr(weather_data, "avg_temp", "N/A"),
+        "humidity": getattr(weather_data, "humidity", "N/A"),
+        "rainfall": getattr(weather_data, "rainfall", "N/A"),
+        "weather_summary": getattr(weather_data, "weather_summary", room.weather_context),
+        "land_summary": user.land_summary or "N/A",
+        "soil_summary": user.soil_summary or "N/A",
+        "current_stage": room.current_stage or "Unknown"
+    }
+
+    ai_result = get_pest_guidelines(crop=room.chosen_crop,context=context)
+
+    room.pest_guideline = ai_result
+    room.timeline.append({
+    "timestamp": datetime.now(timezone.utc).isoformat(),
+    "event": "AI Pest Analysis Completed",
+    "details": f"Pest risk report generated for {room.chosen_crop} at '{room.current_stage}' stage."
+    })
+
+    # Tell SQLAlchemy that the JSON column changed
+    flag_modified(room, "timeline")
+
+    # Commit the change
+    db.session.commit()
+    return jsonify({
+        "context_used": context,
+        "pest_analysis": ai_result
+    })
+
+
+# 💰 Financial AI
+@app.route("/api/finance/<crop_id>", methods=["POST"])
+def api_finance(crop_id):
+    """AI-driven farm budgeting and financial advice."""
+    room = CropRoom.query.filter_by(crop_id=crop_id).first()
+    if not room:
+        return jsonify({"error": "Crop room not found"}), 404
+
+    user = User.query.filter_by(name=room.username).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    context = {
+        "region": room.region,
+        "soil_type": room.soil_description,
+        "weather_summary": room.weather_context,
+        "expected_yield": room.budget_breakdown.get("expected_yield", "N/A"),
+        "estimated_budget": room.budget_breakdown.get("estimated_budget", "Unknown"),
+        "land_area": user.land_area or "Unknown",
+        "ndvi": user.ndvi or "N/A",
+        "ndwi": user.ndwi or "N/A"
+    }
+
+    ai_result = get_financial_advice(
+        crop=room.chosen_crop,
+        context=context
+    )
+
+    room.financial_suggestion = ai_result
+    room.timeline.append({
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "event": "AI Financial Advice Generated",
+        "details": f"Based on budget ₹{context['estimated_budget']} and yield {context['expected_yield']} quintals."
+    })
+    db.session.add(room)
+    db.session.commit()
+    return jsonify({
+        "context_used": context,
+        "financial_advice": ai_result
+    })
+
+
+# 🤖 AI Doubt Solver
+@app.route("/api/ai-doubt/<crop_id>", methods=["POST"])
+def api_ai_doubt(crop_id):
+    """Chat-like AI doubt resolution module."""
+    room = CropRoom.query.filter_by(crop_id=crop_id).first()
+    if not room:
+        return jsonify({"error": "Crop room not found"}), 404
+
+    user = User.query.filter_by(name=room.username).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    query = request.json.get("query", "").strip()
+    if not query:
+        return jsonify({"error": "Empty query"}), 400
+
+    context = {
+        "crop": room.chosen_crop,
+        "soil_type": room.soil_description,
+        "weather_summary": room.weather_context,
+        "region": room.region,
+        "current_stage": room.current_stage,
+        "land_area": user.land_area or "Unknown",
+        "soil_summary": user.soil_summary or "N/A",
+        "land_summary": user.land_summary or "N/A"
+    }
+
+    ai_reply = get_ai_doubt_response(query=query, context=context)
+
+    if not room.ai_doubt_history:
+        room.ai_doubt_history = []
+    room.ai_doubt_history.append({
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "user_query": query,
+        "ai_reply": ai_reply
+    })
+
+    room.timeline.append({
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "event": "AI Doubt Answered",
+        "details": f"AI responded to query: '{query[:40]}...'"
+    })
+    db.session.add(room)
+    db.session.commit()
+    return jsonify({
+        "reply": ai_reply,
+        "context_used": context
+    })
 
 
 

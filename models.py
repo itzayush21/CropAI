@@ -117,8 +117,8 @@ class CropRoom(db.Model):
     __tablename__ = 'crop_room_db'
 
     id = db.Column(db.Integer, primary_key=True)
-    crop_id = db.Column(db.String(50), unique=True, nullable=False, index=True)  # Unique crop project ID
-    username = db.Column(db.String(100), nullable=False)  # Owner (linked to user email)
+    crop_id = db.Column(db.String(50), unique=True, nullable=False, index=True)
+    username = db.Column(db.String(100), nullable=False)
     chosen_crop = db.Column(db.String(100), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -137,22 +137,26 @@ class CropRoom(db.Model):
     fertilizers_suggested = db.Column(db.JSON)  # Fertilizer insights
     pest_guideline = db.Column(db.JSON)         # Pest control data
     financial_suggestion = db.Column(db.JSON)   # Financial AI output
-    budget_breakdown = db.Column(db.JSON)       # Cost & expense data
+    budget_breakdown = db.Column(db.JSON)       # Cost & yield info
 
     # -------------------------------
-    # TIMELINE & STEPS
+    # TIMELINE & PIPELINE STEPS
     # -------------------------------
-    timeline = db.Column(db.JSON)               # List of all events (system/user/AI)
-    next_step = db.Column(db.Text)              # Current AI-predicted next step
-    previous_steps = db.Column(db.JSON)         # ✅ List of previous steps with details
-    current_stage = db.Column(db.String(100))   # e.g., "Germination", "Vegetative", "Harvest"
+    current_step = db.Column(db.JSON)           # ✅ Active step (AI generated)
+    next_step = db.Column(db.JSON)              # ✅ Upcoming AI-predicted step
+    previous_steps = db.Column(db.JSON, default=[])  # ✅ Completed steps
+    current_stage = db.Column(db.String(200))   # e.g. "Germination", "Harvest"
+    timeline = db.Column(db.JSON, default=list)   # ✅ Event/activity timeline
 
     # -------------------------------
     # NOTES & INTERACTIONS
     # -------------------------------
-    user_notes = db.Column(db.JSON)             # Farmer's saved notes
-    ai_doubt_history = db.Column(db.JSON)       # Chat history for doubt-solving AI
+    user_notes = db.Column(db.JSON, default=[])         # ✅ Farmer notes
+    ai_doubt_history = db.Column(db.JSON, default=[])   # ✅ AI chat history
 
+    # -------------------------------
+    # INITIALIZER
+    # -------------------------------
     def __init__(self, username, chosen_crop, region=None):
         self.username = username
         self.chosen_crop = chosen_crop
