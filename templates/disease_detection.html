@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CropAI | Disease Detection</title>
+
+  <style>
+    body {
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #f3ffe1, #c4f3a6);
+      margin: 0;
+      color: #1d2b10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    header {
+      width: 100%;
+      background: #2d5a27;
+      color: #fff;
+      text-align: center;
+      padding: 1.5rem 0;
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+      letter-spacing: 1px;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: start; /* ✅ Ensures top alignment (no floating) */
+      gap: 30px;
+      max-width: 1100px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      margin-top: 40px;
+      padding: 40px;
+      backdrop-filter: blur(10px);
+    }
+
+    section {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start; /* ✅ Forces alignment to top */
+    }
+
+    h2 {
+      color: #205b23;
+      font-size: 1.6rem;
+      margin-bottom: 10px;
+    }
+
+    p {
+      color: #333;
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .input-section {
+      margin-bottom: 25px;
+      text-align: left;
+    }
+
+    label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    select,
+    input[type="text"] {
+      width: 100%;
+      padding: 10px 12px;
+      border: 2px solid #4b9e3d;
+      border-radius: 10px;
+      background: #f8fff5;
+      font-size: 1rem;
+      outline: none;
+      transition: 0.3s;
+    }
+
+    select:focus,
+    input:focus {
+      border-color: #31772e;
+      background: #ecffe3;
+    }
+
+    .upload-box {
+      border: 2px dashed #4b9e3d;
+      border-radius: 15px;
+      padding: 40px 20px;
+      background: #f8fff5;
+      text-align: center;
+      transition: 0.3s ease;
+    }
+
+    .upload-box:hover {
+      background: #ecffe3;
+      transform: scale(1.02);
+    }
+
+    input[type="file"] {
+      display: none;
+    }
+
+    .upload-btn {
+      background: #3d9138;
+      color: white;
+      padding: 10px 25px;
+      border-radius: 30px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s;
+      display: inline-block;
+      margin-top: 10px;
+    }
+
+    .upload-btn:hover {
+      background: #31772e;
+    }
+
+    #preview {
+      margin-top: 20px;
+      max-width: 100%;
+      border-radius: 10px;
+      display: none;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    #spinner {
+      display: none;
+      margin: 20px auto;
+    }
+
+    /* Placeholder (shown initially) */
+    #placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      height: 100%;
+      min-height: 400px;
+      color: #2f4128;
+      animation: fadeIn 0.8s ease;
+    }
+
+    #placeholder img {
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+      opacity: 0.85;
+      margin-bottom: 20px;
+    }
+
+    /* AI Result container */
+    #result-container {
+      background: #fafff5;
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      animation: fadeIn 0.6s ease;
+      display: none;
+    }
+
+    #result-container h3 {
+      color: #2d5a27;
+      margin-bottom: 10px;
+    }
+
+    #top5 {
+      list-style-type: none;
+      padding-left: 15px;
+    }
+
+    #top5 li {
+      margin-bottom: 5px;
+      color: #444;
+    }
+
+    .ai-response {
+      background: #e5fbe2;
+      border-left: 6px solid #3d9138;
+      padding: 18px 20px;
+      border-radius: 12px;
+      margin-top: 20px;
+      max-height: 750px;
+      overflow-y: auto;
+      white-space: normal;
+      line-height: 1.6;
+    }
+
+    .ai-response h4 {
+      margin-top: 0;
+      color: #205b23;
+      font-size: 1.1rem;
+    }
+
+    .ai-response p,
+    .ai-response ul,
+    .ai-response ol {
+      margin-bottom: 10px;
+      color: #1d2b10;
+    }
+
+    .ai-response ul {
+      padding-left: 20px;
+      list-style-type: disc;
+    }
+
+    .ai-response a {
+      color: #205b23;
+      font-weight: 600;
+      text-decoration: underline;
+    }
+
+    footer {
+      margin-top: 40px;
+      color: #456a44;
+      font-size: 0.9rem;
+      padding-bottom: 20px;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 25px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>🌾 CropAI – Smart Disease Detection</h1>
+  </header>
+
+  <main>
+    <!-- Left Column: Upload + Input -->
+    <section>
+      <h2>🧬 Upload Plant Image</h2>
+      <p>Detect plant diseases instantly using our <strong>YOLOv11 + Gemini-powered AI</strong>.</p>
+
+      <div class="input-section">
+        <label for="cropType">🌱 Select Crop Type:</label>
+        <select id="cropType" required>
+          <option value="">-- Choose Crop --</option>
+          <option>Tomato</option>
+          <option>Potato</option>
+          <option>Wheat</option>
+          <option>Rice</option>
+          <option>Maize</option>
+          <option>Cotton</option>
+          <option>Coffee</option>
+          <option>Soybean</option>
+          <option>Tea</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div class="input-section">
+        <label for="treatmentPreference">⚙️ Treatment Preference:</label>
+        <select id="treatmentPreference" required>
+          <option value="">-- Choose Preference --</option>
+          <option value="Organic">Organic / Eco-friendly</option>
+          <option value="Chemical">Chemical (Fast-acting)</option>
+          <option value="Balanced">Balanced Approach</option>
+        </select>
+      </div>
+
+      <div class="upload-box">
+        <input type="file" id="imageInput" accept="image/*" required>
+        <label for="imageInput" class="upload-btn">📤 Choose an Image</label>
+        <img id="preview" src="" alt="Preview">
+      </div>
+
+      <img id="spinner" src="https://i.gifer.com/ZKZg.gif" width="60" alt="Loading...">
+    </section>
+
+    <!-- Right Column: Placeholder + Results -->
+    <section id="result-section">
+      <div id="placeholder">
+        <div>
+          <img src="https://cdn-icons-png.flaticon.com/512/4140/4140048.png" width="120" alt="AI Illustration">
+          <h3 style="color:#2d5a27;">🤖 Ready for Analysis</h3>
+          <p>
+            Upload a clear image of your plant leaf or crop area.<br>
+            Our <strong>YOLOv11 + Gemini AI</strong> will detect the disease<br>
+            and suggest the best treatment methods instantly.
+          </p>
+          <ul style="text-align:left; display:inline-block; margin-top:15px;">
+            <li>Ensure good lighting and focus on affected areas.</li>
+            <li>Select correct crop type and treatment preference.</li>
+            <li>Results and guidance will appear here.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div id="result-container">
+        <h3>🩺 AI Diagnosis</h3>
+        <p><strong>Disease:</strong> <span id="disease"></span></p>
+        <p><strong>Confidence:</strong> <span id="confidence"></span></p>
+
+        <div>
+          <h4>Top-5 Predictions:</h4>
+          <ul id="top5"></ul>
+        </div>
+
+        <div class="ai-response">
+          <h4>🌱 Gemini Guidance:</h4>
+          <p id="guidance"></p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>© 2025 CropAI | Powered by YOLOv11 + Gemini 2.0 Flash</footer>
+
+  <script>
+    const imageInput = document.getElementById("imageInput");
+    const cropTypeInput = document.getElementById("cropType");
+    const prefInput = document.getElementById("treatmentPreference");
+    const preview = document.getElementById("preview");
+    const spinner = document.getElementById("spinner");
+    const resultContainer = document.getElementById("result-container");
+    const placeholder = document.getElementById("placeholder");
+
+    imageInput.addEventListener("change", async function () {
+      const file = this.files[0];
+      const cropType = cropTypeInput.value;
+      const preference = prefInput.value;
+
+      if (!file) return;
+      if (!cropType || !preference) {
+        alert("⚠️ Please select both crop type and treatment preference before uploading.");
+        this.value = "";
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        preview.src = e.target.result;
+        preview.style.display = "block";
+      };
+      reader.readAsDataURL(file);
+
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("crop_type", cropType);
+      formData.append("preference", preference);
+
+      spinner.style.display = "block";
+      placeholder.style.display = "none";
+      resultContainer.style.display = "none";
+
+      try {
+        const res = await fetch("/api/disease-detect", { method: "POST", body: formData });
+        const data = await res.json();
+
+        spinner.style.display = "none";
+        resultContainer.style.display = "block";
+
+        if (data.error) {
+          document.getElementById("disease").textContent = "Error: " + data.error;
+          return;
+        }
+
+        document.getElementById("disease").textContent = data.disease_detected;
+        document.getElementById("confidence").textContent = (data.confidence * 100).toFixed(2) + "%";
+
+        function renderAIGuidance(rawText) {
+          let html = rawText
+            .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+            .replace(/\*(.*?)\*/g, "<em>$1</em>")
+            .replace(/`([^`]+)`/g, "<code>$1</code>")
+            .replace(/\n- (.*?)(?=\n|$)/g, "<ul><li>$1</li></ul>")
+            .replace(/\n\d+\.\s(.*?)(?=\n|$)/g, "<ol><li>$1</li></ol>")
+            .replace(/\n/g, "<br>");
+
+          const tempDiv = document.createElement("div");
+          tempDiv.innerHTML = html;
+          tempDiv.querySelectorAll("script, iframe").forEach(el => el.remove());
+          return tempDiv.innerHTML;
+        }
+
+        document.getElementById("guidance").innerHTML = renderAIGuidance(data.ai_guidance);
+
+        const top5List = document.getElementById("top5");
+        top5List.innerHTML = "";
+        data.top5_predictions.forEach(pred => {
+          const li = document.createElement("li");
+          li.textContent = `${pred.class} (${(pred.confidence * 100).toFixed(2)}%)`;
+          top5List.appendChild(li);
+        });
+
+      } catch (err) {
+        spinner.style.display = "none";
+        alert("⚠️ Error connecting to server: " + err.message);
+      }
+    });
+  </script>
+</body>
+</html>

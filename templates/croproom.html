@@ -798,10 +798,43 @@
       document.head.appendChild(style);
     });
 
+    document.addEventListener("DOMContentLoaded", () => {
+  const cropId = "{{ room.crop_id }}";
+  const completeBtn = document.getElementById("complete-btn");
+
+  completeBtn.addEventListener("click", async () => {
+    completeBtn.innerHTML = "⏳ Updating...";
+    completeBtn.disabled = true;
+
+    try {
+      const res = await fetch(`/update-step/${cropId}`, {
+        method: "POST"
+      });
+
+      if (res.ok) {
+        // optional: show success before reloading
+        completeBtn.innerHTML = "✅ Step Updated!";
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } else {
+        const err = await res.text();
+        alert(`⚠️ Error: ${err}`);
+        completeBtn.innerHTML = "⚠️ Try Again";
+      }
+    } catch (err) {
+      console.error("Update Step Error:", err);
+      alert("❌ Failed to update step. Please try again later.");
+      completeBtn.innerHTML = "⚠️ Retry";
+    } finally {
+      completeBtn.disabled = false;
+    }
+  });
 
 
+    });
 
-  </script>
+</script>
 
 
 

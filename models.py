@@ -1,6 +1,7 @@
 from flask_sqlalchemy import SQLAlchemy
 import uuid
 from datetime import datetime
+from sqlalchemy.ext.mutable import MutableList
 
 db = SQLAlchemy()
 
@@ -146,7 +147,7 @@ class CropRoom(db.Model):
     next_step = db.Column(db.JSON)              # ✅ Upcoming AI-predicted step
     previous_steps = db.Column(db.JSON, default=[])  # ✅ Completed steps
     current_stage = db.Column(db.String(200))   # e.g. "Germination", "Harvest"
-    timeline = db.Column(db.JSON, default=list)   # ✅ Event/activity timeline
+    timeline = db.Column(MutableList.as_mutable(db.JSON), default=list)
 
     # -------------------------------
     # NOTES & INTERACTIONS

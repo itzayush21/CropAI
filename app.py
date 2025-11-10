@@ -12,9 +12,11 @@ from module.financial_genai import generate_financial_advice
 from module.crop_suggestion_ai import generate_crop_suggestion
 from module.gemini_crop_pipeline import generate_initial_step, generate_next_step, format_step_for_db
 from module.gemini_advisors import get_fertilizer_suggestions, get_pest_guidelines, get_financial_advice, get_ai_doubt_response
+from module.disease_pipeline import run_yolo_classification, get_gemini_guidance
 import uuid
 import math
 import json
+import tempfile
 from datetime import datetime, timezone
 
 
@@ -799,7 +801,7 @@ def update_step(crop_id):
     })
     
 
-# 🧪 Fertilizer AI
+# Fertilizer AI
 @app.route("/api/fertilizer/<crop_id>", methods=["POST"])
 def api_fertilizer(crop_id):
     """Generate context-aware fertilizer recommendations using Gemini AI."""
@@ -830,33 +832,47 @@ def api_fertilizer(crop_id):
         "ndwi": user.ndwi or "N/A"
     }
 
-    ai_result = get_fertilizer_suggestions(
-        crop=room.chosen_crop,
-        context=context
-    )
-    #print(f"[DEBUG] AI Result: {ai_result}")
-    # ✅ Store and log
+    # 🧠 Call Gemini AI for fertilizer recommendations
+    try:
+        ai_result = get_fertilizer_suggestions(
+            crop=room.chosen_crop,
+            context=context
+        )
+    except Exception as e:
+        print(f"[Gemini Fertilizer Error]: {e}")
+        return jsonify({"error": "AI generation failed. Please try again."}), 500
+
+    # ✅ Update DB with AI-generated recommendations
     room.fertilizers_suggested = ai_result
+
+    # 🧩 Ensure timeline is initialized
+    if not room.timeline:
+        room.timeline = []
+
+    # 🕒 Append new event (aligned with unified event style)
     room.timeline.append({
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "event": "AI Fertilizer Suggestions Generated",
-        "details": f"Generated using soil type '{context['soil_type']}' and rainfall '{context['rainfall']}'."
+        "event": "Fertilizer Advice Generated",
+        "details": (
+            f"AI provided {len(ai_result)} fertilizer suggestions for "
+            f"'{room.chosen_crop}' based on soil type '{context['soil_type']}', "
+            f"rainfall {context['rainfall']} mm, and region '{context['region']}'."
+        )
     })
-    #print(f"[DEBUG] Fertilizer suggestions for crop_id {crop_id}: {ai_result}")
-    print("I am here")
+
+    # 💾 Commit all updates
     db.session.commit()
-    print("------------------------------------------------------------")
-    print("Pest Control AI Result:")
-    print(f"contecxt: {context}")
-    print(f"ai_result: {ai_result}")
-    print("------------------------------------------------------------")
+
+
+    # ✅ Send back data to frontend
     return jsonify({
         "context_used": context,
         "recommendations": ai_result
     })
 
 
-# 🐛 Pest AI
+
+# 🐛 PEST AI MODULE
 @app.route("/api/pest/<crop_id>", methods=["POST"])
 def api_pest(crop_id):
     """Run AI pest risk detection and management advice."""
@@ -868,6 +884,7 @@ def api_pest(crop_id):
     if not user:
         return jsonify({"error": "User not found"}), 404
 
+    # 🌦️ Get soil and weather data
     weather_data = WeatherDB.query.filter_by(district=user.district, state=user.state).first()
     soil_data = SoilDB.query.filter_by(district=user.district, state=user.state).first()
 
@@ -884,27 +901,32 @@ def api_pest(crop_id):
         "current_stage": room.current_stage or "Unknown"
     }
 
-    ai_result = get_pest_guidelines(crop=room.chosen_crop,context=context)
+    # 🤖 Get AI-generated pest guidelines
+    try:
+        ai_result = get_pest_guidelines(crop=room.chosen_crop, context=context)
+    except Exception as e:
+        print(f"[Gemini Pest Error]: {e}")
+        return jsonify({"error": "AI generation failed. Please try again."}), 500
 
+    # 🧩 Save pest analysis and update timeline
     room.pest_guideline = ai_result
+    if not isinstance(room.timeline, list):
+        room.timeline = []
+
     room.timeline.append({
-    "timestamp": datetime.now(timezone.utc).isoformat(),
-    "event": "AI Pest Analysis Completed",
-    "details": f"Pest risk report generated for {room.chosen_crop} at '{room.current_stage}' stage."
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "event": "AI Pest Analysis Completed",
+        "details": f"AI detected pest risks for '{room.chosen_crop}' at '{room.current_stage}' stage in {context['region']}."
     })
 
-    # Tell SQLAlchemy that the JSON column changed
-    flag_modified(room, "timeline")
-
-    # Commit the change
     db.session.commit()
+
     return jsonify({
         "context_used": context,
         "pest_analysis": ai_result
     })
 
-
-# 💰 Financial AI
+# 💰 FINANCIAL AI MODULE
 @app.route("/api/finance/<crop_id>", methods=["POST"])
 def api_finance(crop_id):
     """AI-driven farm budgeting and financial advice."""
@@ -916,34 +938,46 @@ def api_finance(crop_id):
     if not user:
         return jsonify({"error": "User not found"}), 404
 
+    # 🌾 Build analysis context
     context = {
-        "region": room.region,
-        "soil_type": room.soil_description,
-        "weather_summary": room.weather_context,
-        "expected_yield": room.budget_breakdown.get("expected_yield", "N/A"),
-        "estimated_budget": room.budget_breakdown.get("estimated_budget", "Unknown"),
+        "region": room.region or f"{user.district}, {user.state}",
+        "soil_type": room.soil_description or "Unknown",
+        "weather_summary": room.weather_context or "N/A",
+        "expected_yield": (room.budget_breakdown or {}).get("expected_yield", "N/A"),
+        "estimated_budget": (room.budget_breakdown or {}).get("estimated_budget", "Unknown"),
         "land_area": user.land_area or "Unknown",
         "ndvi": user.ndvi or "N/A",
         "ndwi": user.ndwi or "N/A"
     }
 
-    ai_result = get_financial_advice(
-        crop=room.chosen_crop,
-        context=context
-    )
+    # 🤖 Generate financial suggestions
+    try:
+        ai_result = get_financial_advice(crop=room.chosen_crop, context=context)
+    except Exception as e:
+        print(f"[Gemini Finance Error]: {e}")
+        return jsonify({"error": "AI generation failed. Please try again."}), 500
 
+    # ✅ Update DB
     room.financial_suggestion = ai_result
+    if not isinstance(room.timeline, list):
+        room.timeline = []
+
     room.timeline.append({
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "event": "AI Financial Advice Generated",
-        "details": f"Based on budget ₹{context['estimated_budget']} and yield {context['expected_yield']} quintals."
+        "details": (
+            f"Financial analysis done for {room.chosen_crop}. "
+            f"Budget ₹{context['estimated_budget']} | Expected yield: {context['expected_yield']} quintals."
+        )
     })
-    db.session.add(room)
+
     db.session.commit()
+
     return jsonify({
         "context_used": context,
         "financial_advice": ai_result
     })
+
 
 
 # 🤖 AI Doubt Solver
@@ -995,6 +1029,55 @@ def api_ai_doubt(crop_id):
         "context_used": context
     })
 
+
+# ----------------------------------------------------------
+# 🌿 Route: Web UI
+# ----------------------------------------------------------
+@app.route("/module/disease-detection")
+def disease_page():
+    return render_template("disease_detection.html")
+
+# ----------------------------------------------------------
+# 🧬 Route: API Endpoint for Disease Detection
+# ----------------------------------------------------------
+@app.route("/api/disease-detect", methods=["POST"])
+def detect_disease():
+    try:
+        if "image" not in request.files:
+            return jsonify({"error": "No image uploaded"}), 400
+
+        image = request.files["image"]
+        crop_type = request.form.get("crop_type", "Unknown Crop")
+        preference = request.form.get("preference", "Balanced")
+
+        # Save uploaded image temporarily
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
+            image.save(tmp.name)
+            yolo_result = run_yolo_classification(tmp.name)
+
+        if "error" in yolo_result:
+            return jsonify(yolo_result), 500
+
+        top1 = yolo_result["top1"]
+        top5 = yolo_result["top5"]
+
+        # Get Gemini guidance
+        guidance = get_gemini_guidance(top5, crop_type, preference)
+
+        response = {
+            "task": "disease_classification_with_guidance",
+            "crop_type": crop_type,
+            "preference": preference,
+            "disease_detected": top1["class"],
+            "confidence": top1["confidence"],
+            "top5_predictions": top5,
+            "ai_guidance": guidance
+        }
+
+        return jsonify(response)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == '__main__':
