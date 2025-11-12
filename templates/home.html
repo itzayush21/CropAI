@@ -169,7 +169,7 @@
         }
 
         .features {
-            background: linear-gradient(180deg, #1b3a33, #0f2027);
+            background: linear-gradient(180deg, #223c3d, #124d54);
             padding: 6rem 4rem;
         }
 
@@ -202,15 +202,21 @@
             justify-content: space-between;
             gap: 3rem;
             margin-bottom: 4rem;
+            
         }
 
         .feature-block img {
             width: 45%;
             border-radius: 15px;
+            border-color: #040404;
+            border-width: 4px;
+            border-style: solid;
             box-shadow: 0 0 15px rgba(179, 255, 0, 0.2);
         }
 
         .feature-text {
+            border-left: 5px solid #b3ff00;
+            padding-left: 1.5rem;
             width: 50%;
         }
 
@@ -351,8 +357,15 @@
                 unified and intuitive dashboard.
             </p>
             <div class="hero-buttons">
-                <button class="btn btn-primary">Launch Dashboard</button>
-                <button class="btn btn-outline">Learn More</button>
+                <!-- Launch Dashboard → redirect to login page -->
+                <button class="btn btn-primary" onclick="window.location.href='/login'">
+                    Launch Dashboard
+                </button>
+
+                <!-- Learn More → smooth scroll to About section -->
+                <button class="btn btn-outline" onclick="window.location.href='/methodology'">
+                    Learn More
+                </button>
             </div>
         </div>
 
@@ -375,40 +388,57 @@
         <h2>Key Modules of CropAI</h2>
 
         <div class="feature-block">
-            <div class="feature-text">
-                <h3>Crop Room Dashboard</h3>
-                <p>Monitor soil health, analyze crop progress, and get AI-powered insights in real-time for smarter
-                    farming decisions.</p>
-            </div>
-            <img src="\static\Screenshot 2025-11-04 152400.png" alt="Dashboard">
-        </div>
+  <div class="feature-text">
+    <h3>Crop Room Dashboard</h3>
+    <p>
+      The <strong>Crop Room Dashboard</strong> acts as the central hub for farmers, combining all real-time field data in one intelligent interface.
+      It continuously monitors <strong>soil health</strong>, crop growth stages, and irrigation status using satellite indices such as NDVI and NDWI.
+      Through AI-powered insights, it visualizes patterns of vegetation health and detects anomalies early, empowering farmers to make precise
+      and data-driven decisions on crop scheduling, fertilization, and pest management.
+    </p>
+  </div>
+  <img src='https://images.unsplash.com/photo-1511735643442-503bb3bd348a?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=800' alt="Dashboard">
+</div>
 
-        <div class="feature-block">
-            <img src="\static\Screenshot 2025-11-04 152400.png" alt="Crop Advisor">
-            <div class="feature-text">
-                <h3>Crop & Fertilizer Advisor</h3>
-                <p>AI and RAG models recommend best crops and fertilizer combinations suited to soil composition and
-                    weather patterns.</p>
-            </div>
-        </div>
+<div class="feature-block">
+  <img src="https://plus.unsplash.com/premium_photo-1664297279674-e096752abf47?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=800" alt="Crop Advisor">
+  <div class="feature-text">
+    <h3>Crop & Fertilizer Advisor</h3>
+    <p>
+      The <strong>Crop & Fertilizer Advisor</strong> intelligently analyzes soil chemistry, pH levels, nutrient ratios, and local weather forecasts
+      to recommend the most profitable and sustainable crop choices for the season.  
+      It also generates fertilizer plans customized to growth stages, combining <strong>organic and chemical recommendations</strong> for optimal yield.
+      Leveraging RAG and Gemini AI, the system offers step-by-step, adaptive guidance — helping farmers fine-tune input management while maintaining ecological balance.
+    </p>
+  </div>
+</div>
 
-        <div class="feature-block">
-            <div class="feature-text">
-                <h3>Pest & Disease Diagnosis</h3>
-                <p>Identify crop diseases and pest infestations using computer vision and Gemini-powered models for
-                    early action.</p>
-            </div>
-            <img src="\static\Screenshot 2025-11-04 152400.png" alt="Pest Detection">
-        </div>
+<div class="feature-block">
+  <div class="feature-text">
+    <h3>Pest & Disease Diagnosis</h3>
+    <p>
+      The <strong>Pest & Disease Diagnosis</strong> module employs computer vision and deep learning models (YOLOv11 + Gemini)
+      to detect early symptoms of plant stress, leaf blight, and pest infestations from uploaded or live-captured images.  
+      It not only identifies the disease but also explains probable causes, affected regions, and recommended treatments — both organic and chemical.  
+      Farmers can interact through natural-language queries to receive real-time prevention strategies, ensuring quick recovery and minimized losses.
+    </p>
+  </div>
+  <img src="https://images.unsplash.com/photo-1708255562611-1e6a003b4ca8?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=800" alt="Pest Detection">
+</div>
 
-        <div class="feature-block">
-            <img src="\static\Screenshot 2025-11-04 152400.png" alt="Financial Advisor">
-            <div class="feature-text">
-                <h3>Financial Analytics</h3>
-                <p>Predict costs, profits, and subsidies. Integrate PMFBY, KCC, and other government APIs for real-world
-                    financial insights.</p>
-            </div>
-        </div>
+<div class="feature-block">
+  <img src="https://plus.unsplash.com/premium_photo-1682092055821-6f31d8edb895?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=800" alt="Financial Advisor">
+  <div class="feature-text">
+    <h3>Financial Analytics</h3>
+    <p>
+      The <strong>Financial Analytics</strong> module transforms traditional farming into a data-driven business.
+      It calculates the complete cost-to-profit chain — including seed expenditure, fertilizer cost, water usage, labor input, and expected market value.  
+      Integration with <strong>PMFBY</strong> (crop insurance), <strong>Kisan Credit Card</strong> schemes, and <strong>agri-fintech APIs</strong> allows real-time subsidy tracking and credit evaluation.  
+      By combining yield predictions with historical financial trends, the system provides farmers with ROI projections and practical recommendations for financial resilience.
+    </p>
+  </div>
+</div>
+
     </section>
 
     <section class="about" id="about">

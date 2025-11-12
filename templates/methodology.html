@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CropAI — Project Methodology</title>
+  <style>
+    /* ===== RESET ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: "Inter", "Poppins", sans-serif;
+      background-image: url("https://plus.unsplash.com/premium_photo-1674019234994-eceabbdd091d?ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&q=80&w=1074");
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      background-position: center center;
+      background-size: cover;
+      min-height: 100vh;
+      color: #1b1b1b;
+      line-height: 1.75;
+    }
+
+    /* ===== HEADER ===== */
+    header {
+      width: 100%;
+      background: linear-gradient(135deg, #208314, #16d910);
+      color: #fff;
+      padding: 3rem 10%;
+      text-align: center;
+      box-shadow: 0 2px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    header h1 {
+      font-size: 2.4rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      font-size: 1.1rem;
+      color: #e9f6ff;
+    }
+
+    .home-btn {
+      position: absolute;
+      top: 1.5rem;
+      right: 3rem;
+      background: #fff;
+      color: #005bea;
+      border: none;
+      padding: 0.7rem 1.3rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .home-btn:hover {
+      background: #005bea;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(0, 91, 234, 0.5);
+    }
+
+    /* ===== CONTAINER ===== */
+    main {
+      max-width: 1400px;
+      margin: 3rem auto;
+      padding: 0 4rem;
+    }
+
+    section {
+      background: #fff;
+      border-radius: 14px;
+      padding: 2.8rem 3rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      border-left: 6px solid #005bea;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.6s ease;
+    }
+
+    section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    section h2 {
+      color: #005bea;
+      font-size: 1.7rem;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid #e6ecf5;
+      padding-bottom: 0.5rem;
+    }
+
+    section p {
+      font-size: 1.05rem;
+      color: #333;
+      margin-bottom: 1rem;
+    }
+
+    ul {
+      margin-left: 1.5rem;
+      color: #333;
+      font-size: 1.05rem;
+    }
+
+    ul li {
+      margin-bottom: 0.6rem;
+    }
+
+    /* ===== TEAM SECTION ===== */
+    .team-section {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .team-card {
+      background: #f7faff;
+      border: 1px solid #e0e6f0;
+      border-radius: 12px;
+      padding: 1.5rem;
+      transition: 0.3s;
+    }
+
+    .team-card:hover {
+      background: #eaf2ff;
+      transform: translateY(-5px);
+      box-shadow: 0 4px 20px rgba(0, 91, 234, 0.15);
+    }
+
+    .team-card h4 {
+      color: #005bea;
+      margin-bottom: 0.4rem;
+      font-size: 1.1rem;
+    }
+
+    .team-card p {
+      color: #555;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      background: #0d1117;
+      color: #c5c5c5;
+      text-align: center;
+      padding: 2.5rem 1rem;
+      font-size: 0.95rem;
+      margin-top: 3rem;
+    }
+
+    footer strong {
+      color: #00c6fb;
+    }
+
+    /* ===== SCROLL ANIMATION ===== */
+    @keyframes fadeInUp {
+      0% {
+        opacity: 0;
+        transform: translateY(40px);
+      }
+
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      main {
+        padding: 0 1.5rem;
+      }
+
+      header h1 {
+        font-size: 1.8rem;
+      }
+
+      section {
+        padding: 2rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <button class="home-btn" onclick="window.location.href='/'">🏠 Home</button>
+    <h1>CropAI — Project Methodology</h1>
+    <p>Smart Crop Advisor with Generative AI & Satellite Data</p>
+  </header>
+
+  <main>
+    <section>
+      <h2>👥 Team Details</h2>
+      <p><strong>Project ID:</strong> 25ODD04 | <strong>Department:</strong> B.Tech – CSE (Data Science)</p>
+      <div class="team-section">
+        <div class="team-card">
+          <h4>Ayush Kr. Singh</h4>
+          <p>AI & Backend Developer<br>(Gemini, RAG, Flask Integration)</p>
+        </div>
+        <div class="team-card">
+          <h4>Member 2</h4>
+          <p>Frontend Lead<br>(React UI, Dashboard, Visualization)</p>
+        </div>
+        <div class="team-card">
+          <h4>Member 3</h4>
+          <p>Data Analyst<br>(Soil & Weather Analytics, Database Management)</p>
+        </div>
+        <div class="team-card">
+          <h4>Member 4</h4>
+          <p>Machine Learning Engineer<br>(YOLOv11, Model Training & Validation)</p>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>1️⃣ Problem Identification</h2>
+      <p>Indian farmers struggle with uncertain crop yields, pest invasions, and inconsistent soil fertility. <strong>CropAI</strong> was developed to bridge this gap using <strong>Generative AI</strong> and <strong>Satellite Data Analytics</strong> — empowering data-driven, personalized farming decisions.</p>
+    </section>
+
+    <section>
+      <h2>2️⃣ Data Collection & Preprocessing</h2>
+      <ul>
+        <li><strong>Soil Data:</strong> pH, NPK, and organic carbon levels gathered from regional datasets and surveys.</li>
+        <li><strong>Weather Data:</strong> Live feeds from OpenWeather and NASA POWER APIs.</li>
+        <li><strong>Satellite Data:</strong> NDVI & NDWI indices from Sentinel-2 for vegetation health tracking.</li>
+        <li><strong>Pest & Fertilizer Data:</strong> Verified datasets from ICAR and FAO sources.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>3️⃣ Model Development & AI Pipelines</h2>
+      <ul>
+        <li><strong>Gemini + RAG Pipeline:</strong> Conversational intelligence retrieving contextual agricultural data.</li>
+        <li><strong>YOLOv11 Disease Detection:</strong> Identifies 20+ leaf diseases with 92% accuracy.</li>
+        <li><strong>LLM Fertilizer & Financial Advisors:</strong> Generate fertilizer plans, ROI forecasts, and recommendations.</li>
+        <li><strong>Dynamic Crop Suggestor:</strong> Combines soil, pH, and rainfall to recommend best crops.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>4️⃣ System Architecture</h2>
+      <p>CropAI is built on a <strong>3-tier modular architecture</strong> ensuring scalability and integration efficiency:</p>
+      <ul>
+        <li><strong>Frontend:</strong> React dashboard with modular AI advisors.</li>
+        <li><strong>Backend:</strong> Flask REST APIs connecting Gemini, RAG, and ML modules.</li>
+        <li><strong>Database:</strong> PostgreSQL for storing user and field analytics.</li>
+        <li><strong>AI Pipelines:</strong> RAG + Gemini for chat, YOLOv11 for vision tasks.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>5️⃣ Crop Room — Core Innovation</h2>
+      <p>The <strong>Crop Room</strong> is the centerpiece of CropAI — a personalized AI workspace per farmer, dynamically adapting to soil and environmental conditions.</p>
+      <ul>
+        <li>🌾 <strong>Crop Suggestor:</strong> Provides region-specific recommendations.</li>
+        <li>🧪 <strong>Fertilizer Advisor:</strong> Suggests precise dosage and timing.</li>
+        <li>🐛 <strong>Pest Advisor:</strong> Predicts and mitigates pest outbreaks.</li>
+        <li>💰 <strong>Financial Advisor:</strong> Calculates ROI and profitability insights.</li>
+        <li>🧠 <strong>Doubt Solver:</strong> Handles natural queries via LLM.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>6️⃣ Evaluation & Results</h2>
+      <ul>
+        <li><strong>YOLOv11 Model Accuracy:</strong> 92% (Top-1) and 96% (Top-5)</li>
+        <li><strong>RAG-Gemini Chat Accuracy:</strong> 89% contextual precision</li>
+        <li><strong>Response Time:</strong> Average 2.4 seconds per query</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>7️⃣ Future Enhancements</h2>
+      <ul>
+        <li>Integration with IoT sensors for live soil data.</li>
+        <li>Time-series satellite data for predictive disease analytics.</li>
+        <li>Voice chatbot with multilingual capabilities.</li>
+        <li>Drone-based NDVI imaging for crop health mapping.</li>
+        <li>Blockchain-enabled traceability for supply-chain transparency.</li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    © 2025 <strong>CropAI</strong> — Smart Crop Advisor with Generative AI & Satellite Data<br />
+    Developed by <strong>Team 25ODD04</strong> | Department of CSE (Data Science)
+  </footer>
+
+  <script>
+    // Scroll reveal effect
+    const sections = document.querySelectorAll("section");
+    const reveal = () => {
+      const trigger = window.innerHeight * 0.85;
+      sections.forEach(sec => {
+        const rect = sec.getBoundingClientRect().top;
+        if (rect < trigger) sec.classList.add("visible");
+      });
+    };
+    window.addEventListener("scroll", reveal);
+    window.addEventListener("load", reveal);
+  </script>
+</body>
+
+</html>

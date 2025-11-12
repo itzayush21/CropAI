@@ -342,6 +342,9 @@ def fertilizer_advisor():
     try:
         # Call Gemini model
         result = generate_fertilizer_recommendations(full_context, session_id)
+        
+        
+        print("Fertilizer Advisor Result:", result)
 
         # Store in DB
         new_record = FertilizerSuggestionDB(
@@ -1078,6 +1081,33 @@ def detect_disease():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+    
+@app.route("/methodology")
+def methodology():
+    return render_template("methodology.html")
+
+    
+@app.route("/logout", methods=["GET", "POST"])
+def logout():
+    """Logout user, clear session, and redirect to login."""
+    # Option 1: If you’re using a web UI (redirect to login)
+    if request.method == "GET":
+        user_email = session.get("user", {}).get("email") if "user" in session else None
+
+        # Log optional user info before logout
+        app.logger.info(f"User logged out: {user_email or 'Unknown'}")
+
+        # Clear all session data
+        session.clear()
+
+        # Redirect to login page (or your home)
+        return redirect(url_for("home"))  # assumes you have a `login` route
+
+    # Option 2: If frontend calls via AJAX / fetch
+    elif request.method == "POST":
+        session.clear()
+        return jsonify({"message": "Logout successful"}), 200
 
 
 if __name__ == '__main__':
