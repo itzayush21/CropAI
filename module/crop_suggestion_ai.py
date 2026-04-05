@@ -9,7 +9,7 @@ load_dotenv()
 genai.configure(api_key=os.getenv("Google_Api_Key2"))
 
 # Gemini model (fast + accurate)
-model = genai.GenerativeModel("gemini-2.0-flash")
+model = genai.GenerativeModel("gemini-2.5-flash")
 
 # --------------------------
 # DYNAMIC CROP SUGGESTION (AI-Driven)

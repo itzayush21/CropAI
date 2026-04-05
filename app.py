@@ -13,6 +13,9 @@ from module.crop_suggestion_ai import generate_crop_suggestion
 from module.gemini_crop_pipeline import generate_initial_step, generate_next_step, format_step_for_db
 from module.gemini_advisors import get_fertilizer_suggestions, get_pest_guidelines, get_financial_advice, get_ai_doubt_response
 from module.disease_pipeline import run_yolo_classification, get_gemini_guidance
+from module.ai_explainer import run_ai_explainer
+from module.decision_engine import run_decision_engine
+from module.nearby_services_engine import find_nearby_services
 import uuid
 import math
 import json
@@ -46,11 +49,14 @@ def register():
 
         try:
             res = supabase.auth.sign_up({"email": email, "password": password})
+            print("[DEBUG] Supabase signup response:", res)
         except Exception as e:
+            print("[ERROR] Supabase signup failed:", e)
             flash(f"Signup failed: {e}", "error")
             return render_template("register.html")
 
         if not res.user:
+            print("[ERROR] Supabase signup failed:", res)
             flash("Registration failed. Try again later.", "error")
             return render_template("register.html")
 
@@ -1108,6 +1114,263 @@ def logout():
     elif request.method == "POST":
         session.clear()
         return jsonify({"message": "Logout successful"}), 200
+    
+# 🧠 AI EXPLAINER
+@app.route("/module/ai-explainer")
+def ai_explainer():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    return render_template("ai_explainer.html")
+
+
+# ==========================================
+# 🧠 AI EXPLAINER API
+# ==========================================
+@app.route("/api/ai-explainer", methods=["POST"])
+def ai_explainer_api():
+    """
+    AI Explainer Endpoint
+    - Takes user query + language
+    - Uses user DB context (optional enhancement)
+    - Returns structured lesson + audio
+    """
+
+    # 🔐 Optional: Require login (recommended for your app)
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        data = request.get_json() or {}
+
+        user_input = data.get("user_input")
+        language = data.get("language", "english")
+
+        if not user_input:
+            return jsonify({"error": "user_input is required"}), 400
+
+        # ==========================================
+        # 🧠 FETCH USER CONTEXT (SMART INTEGRATION)
+        # ==========================================
+        user = User.query.filter_by(userid=session["user"]["id"]).first()
+
+        user_context = {}
+
+        if user:
+            user_context = {
+                "location": f"{user.district}, {user.state}",
+                "land_area": user.land_area,
+                "soil_summary": user.soil_summary,
+                "land_summary": user.land_summary,
+                "ndvi": user.ndvi,
+                "ndwi": user.ndwi
+            }
+
+            # 🔎 Add soil DB context
+            soil = SoilDB.query.filter_by(
+                district=user.district,
+                state=user.state
+            ).first()
+
+            if soil:
+                user_context.update({
+                    "soil_type": soil.soil_type,
+                    "soil_ph": soil.ph_level,
+                    "nitrogen": soil.nitrogen,
+                    "phosphorus": soil.phosphorus,
+                    "potassium": soil.potassium
+                })
+
+            # 🌦️ Add weather context
+            weather = WeatherDB.query.filter_by(
+                district=user.district,
+                state=user.state
+            ).first()
+
+            if weather:
+                user_context.update({
+                    "temperature": weather.avg_temp,
+                    "rainfall": weather.rainfall,
+                    "humidity": weather.humidity,
+                    "weather_summary": weather.weather_summary
+                })
+
+        # ==========================================
+        # 🚀 RUN AI ENGINE
+        # ==========================================
+        result = run_ai_explainer(
+            user_input=user_input,
+            language=language,
+            user_data=user_context
+        )
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        print("[AI EXPLAINER ERROR]:", str(e))
+        return jsonify({
+            "error": "AI processing failed",
+            "details": str(e)
+        }), 500
+
+
+# ⚖️ DECISION COMPARISON
+@app.route("/module/decision")
+def decision():
+    return render_template("decision_comparison.html")
+
+# ==========================================
+# ⚖️ DECISION COMPARISON API
+# ==========================================
+@app.route("/api/decision", methods=["POST"])
+def decision_api():
+    """
+    Decision Comparison API (Simplified)
+    - Input: crops + language
+    - Context: auto from DB (user + soil + weather)
+    """
+
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        data = request.get_json() or {}
+
+        # ✅ ONLY INPUTS
+        crops = data.get("crops", ["Rice", "Wheat", "Maize"])
+        language = data.get("context", {}).get("language", "english")
+
+        # ==========================================
+        # 👤 FETCH USER
+        # ==========================================
+        user = User.query.filter_by(userid=session["user"]["id"]).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # ==========================================
+        # 🌍 BASE CONTEXT (AUTO)
+        # ==========================================
+        context = {
+            "land_area": f"{user.land_area} acres" if user.land_area else "1 acres",
+            "soil_type": "loam",
+            "soil_ph": 6.5,
+            "rainfall": "medium",
+            "temperature": "moderate",
+            "location": f"{user.district}, {user.state}",
+            "language": language
+        }
+
+        # ==========================================
+        # 🌱 SOIL ENRICHMENT
+        # ==========================================
+        soil = SoilDB.query.filter_by(
+            district=user.district,
+            state=user.state
+        ).first()
+
+        if soil:
+            context["soil_type"] = soil.soil_type or context["soil_type"]
+            context["soil_ph"] = soil.ph_level or context["soil_ph"]
+
+        # ==========================================
+        # 🌦️ WEATHER ENRICHMENT
+        # ==========================================
+        weather = WeatherDB.query.filter_by(
+            district=user.district,
+            state=user.state
+        ).first()
+
+        if weather:
+            if weather.rainfall:
+                context["rainfall"] = (
+                    "high" if weather.rainfall > 1000 else
+                    "low" if weather.rainfall < 500 else
+                    "medium"
+                )
+
+            if weather.avg_temp:
+                context["temperature"] = (
+                    "hot" if weather.avg_temp > 30 else
+                    "cool" if weather.avg_temp < 20 else
+                    "moderate"
+                )
+
+        # ==========================================
+        # 🚀 RUN ENGINE
+        # ==========================================
+        result = run_decision_engine(
+            crops=crops,
+            user_data=context
+        )
+
+        # ==========================================
+        # ✅ RESPONSE FORMAT (MATCH FRONTEND)
+        # ==========================================
+        return jsonify({
+            "language": language,
+            "output": result,          # 🔥 IMPORTANT FIX
+            "context_used": context    # optional (debug / UI)
+        }), 200
+
+    except Exception as e:
+        print("[DECISION API ERROR]:", str(e))
+        return jsonify({
+            "error": "Decision processing failed",
+            "details": str(e)
+        }), 500
+
+# 📦 INVENTORY
+@app.route("/module/inventory")
+def inventory():
+    return render_template("inventory.html")
+
+
+# 🏪 MARKETPLACE
+@app.route("/module/marketplace")
+def marketplace():
+    return render_template("community_marketplace.html")
+
+
+# 📍 NEARBY SERVICES
+@app.route("/nearby-services")
+def nearby_services():
+    return render_template("nearby_service.html")
+
+@app.route("/api/nearby-services", methods=["GET"])
+def nearby_services_api():
+
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        user = User.query.filter_by(userid=session["user"]["id"]).first()
+
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        # ✅ USER LOCATION (IMPORTANT)
+        lat = user.latitude
+        lon = user.longitude
+
+        if not lat or not lon:
+            return jsonify({"error": "User location not available"}), 400
+
+        services = find_nearby_services(lat, lon)
+
+        return jsonify({
+            "location": {
+                "lat": lat,
+                "lon": lon
+            },
+            "services": services
+        })
+
+    except Exception as e:
+        return jsonify({
+            "error": "Failed to fetch services",
+            "details": str(e)
+        }), 500
+
+
 
 
 if __name__ == '__main__':

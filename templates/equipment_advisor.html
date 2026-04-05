@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CropAI | Equipment Advisor</title>
+
+<style>
+:root {
+    --accent: #b3ff00;
+    --accent2: #70ffb3;
+    --text: #f5f7f8;
+    --muted: #cfd8dc;
+    --border: rgba(255,255,255,0.2);
+}
+
+body {
+    margin:0;
+    font-family:"Poppins",sans-serif;
+    background:url('https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=1400&q=80') center/cover no-repeat;
+    backdrop-filter: blur(8px);
+    color:var(--text);
+}
+
+/* HEADER */
+header {
+    display:flex;
+    justify-content:space-between;
+    padding:1.2rem 3rem;
+    backdrop-filter:blur(20px);
+}
+
+.logo { color:var(--accent); font-weight:700; }
+
+.btn {
+    padding:0.7rem 1.4rem;
+    border-radius:999px;
+    border:none;
+    cursor:pointer;
+    font-weight:600;
+}
+
+.btn-cta {
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    color:#000;
+}
+
+/* LAYOUT */
+.wrap {
+    display:grid;
+    grid-template-columns:400px 1fr;
+    gap:2rem;
+    padding:2rem 3rem;
+}
+
+/* CARD */
+.card {
+    background:rgba(15,25,30,0.7);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:1.5rem;
+}
+
+/* INPUT */
+input, select {
+    width:100%;
+    padding:10px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:rgba(255,255,255,0.1);
+    color:#fff;
+    margin-top:6px;
+}
+
+/* CHAT */
+.chat-window {
+    height:70vh;
+    overflow-y:auto;
+}
+
+.msg { margin-bottom:1rem; }
+.bubble {
+    padding:1rem;
+    border-radius:15px;
+    background:rgba(255,255,255,0.1);
+}
+
+.bubble.user {
+    background:rgba(179,255,0,0.2);
+}
+
+/* EQUIPMENT CARD */
+.equip-card {
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:1rem;
+    margin-top:10px;
+    background:rgba(255,255,255,0.05);
+}
+
+.equip-card h4 { color:var(--accent); }
+
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="logo">⚙️ CropAI Equipment Advisor</div>
+<button class="btn btn-cta" onclick="location.href='/dashboard'">Dashboard</button>
+</header>
+
+<div class="wrap">
+
+<!-- LEFT PANEL -->
+<div class="card">
+<h3>Farm Context</h3>
+
+<label>Crop Type</label>
+<input id="crop" placeholder="e.g. Rice">
+
+<label>Land Size (acres)</label>
+<input id="land" type="number">
+
+<label>Budget (₹)</label>
+<input id="budget" type="number">
+
+<label>Farming Type</label>
+<select id="type">
+<option>Traditional</option>
+<option>Modern</option>
+<option>Organic</option>
+</select>
+
+<label>Irrigation</label>
+<select id="irrigation">
+<option>Rain-fed</option>
+<option>Drip</option>
+<option>Canal</option>
+</select>
+
+<button class="btn btn-cta" onclick="getEquipment()">Get Suggestions</button>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="card">
+
+<div id="chatWindow" class="chat-window">
+<div class="msg">
+<div class="bubble">Hi 👋 I will suggest best farming equipment based on your farm.</div>
+</div>
+</div>
+
+<div style="display:flex; gap:10px; margin-top:10px;">
+<input id="followUp" placeholder="Ask follow-up...">
+<button class="btn btn-cta" onclick="sendFollowUp()">Send</button>
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+const chat = document.getElementById("chatWindow");
+
+function addMsg(text, user=false, html=false) {
+    const div = document.createElement("div");
+    div.className = "msg";
+    const bubble = document.createElement("div");
+    bubble.className = "bubble " + (user ? "user" : "");
+    html ? bubble.innerHTML = text : bubble.innerText = text;
+    div.appendChild(bubble);
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+// MAIN API
+async function getEquipment() {
+
+    const payload = {
+        crop: document.getElementById("crop").value,
+        land: document.getElementById("land").value,
+        budget: document.getElementById("budget").value,
+        type: document.getElementById("type").value,
+        irrigation: document.getElementById("irrigation").value
+    };
+
+    addMsg("Getting equipment suggestions...", true);
+
+    const res = await fetch("/api/equipment-suggestor", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    renderEquipment(data);
+}
+
+// RENDER
+function renderEquipment(data) {
+
+    let html = "";
+
+    data.equipment.forEach((e,i) => {
+        html += `
+        <div class="equip-card">
+            <h4>⚙️ ${e.name}</h4>
+            <p><strong>Use:</strong> ${e.use}</p>
+            <p><strong>Cost:</strong> ₹${e.cost}</p>
+            <p><strong>Efficiency:</strong> ${e.efficiency}</p>
+            <p><strong>Suitable For:</strong> ${e.suitable}</p>
+        </div>`;
+    });
+
+    html += `<p><strong>💡 Recommendation:</strong> ${data.summary}</p>`;
+
+    addMsg(html, false, true);
+}
+
+// FOLLOW-UP
+async function sendFollowUp() {
+    const q = document.getElementById("followUp").value;
+    if(!q) return;
+
+    addMsg(q,true);
+
+    const res = await fetch("/api/equipment-followup", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({query:q})
+    });
+
+    const data = await res.json();
+    addMsg(data.answer);
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,308 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<title>CropAI | Marketplace</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+/* =========================
+   DESIGN SYSTEM
+========================= */
+:root {
+    --bg:#0b1410;
+    --card:rgba(255,255,255,0.05);
+    --border:rgba(255,255,255,0.08);
+    --primary:#c4ff61;
+    --accent:#7affd8;
+    --text:#eaf9e6;
+    --sub:#9db59a;
+}
+
+* {
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body {
+    font-family:"Outfit",sans-serif;
+    background:linear-gradient(180deg,#0b1410,#0f1d15);
+    color:var(--text);
+}
+
+/* HEADER */
+.header {
+    padding:1.5rem 5%;
+    border-bottom:1px solid var(--border);
+}
+
+.header h1 {
+    color:var(--primary);
+}
+
+.header p {
+    color:var(--sub);
+}
+
+/* LAYOUT */
+.container {
+    display:grid;
+    grid-template-columns:340px 1fr;
+    gap:2rem;
+    padding:2rem 5%;
+}
+
+/* CARD */
+.card {
+    background:var(--card);
+    border:1px solid var(--border);
+    padding:1.5rem;
+    border-radius:18px;
+    backdrop-filter:blur(10px);
+}
+
+/* FORM */
+.input-group {
+    margin-bottom:12px;
+}
+
+label {
+    font-size:13px;
+    color:var(--sub);
+}
+
+input, select, textarea {
+    width:100%;
+    padding:12px;
+    margin-top:5px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:transparent;
+    color:var(--text);
+}
+
+input:focus, textarea:focus {
+    border:1px solid var(--primary);
+    outline:none;
+}
+
+/* BUTTON */
+button {
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(135deg,var(--primary),var(--accent));
+    font-weight:600;
+    cursor:pointer;
+    margin-top:10px;
+}
+
+button:hover {
+    transform:scale(1.03);
+}
+
+/* SEARCH */
+.search-box {
+    margin-top:10px;
+}
+
+/* GRID */
+.grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+    gap:1rem;
+    margin-top:1rem;
+}
+
+/* SHOP CARD */
+.shop {
+    background:rgba(255,255,255,0.04);
+    padding:1.2rem;
+    border-radius:14px;
+    border:1px solid transparent;
+    transition:0.3s;
+    position:relative;
+}
+
+.shop:hover {
+    border:1px solid var(--border);
+    transform:translateY(-5px);
+}
+
+/* TITLE */
+.shop h3 {
+    color:var(--primary);
+    margin-bottom:5px;
+}
+
+/* TAG */
+.tag {
+    font-size:12px;
+    padding:4px 10px;
+    border-radius:10px;
+    background:rgba(255,255,255,0.1);
+}
+
+/* CONTACT BUTTON */
+.call-btn {
+    display:inline-block;
+    margin-top:10px;
+    padding:6px 12px;
+    border-radius:8px;
+    background:var(--primary);
+    color:#000;
+    font-size:12px;
+    text-decoration:none;
+}
+
+/* EMPTY STATE */
+.empty {
+    text-align:center;
+    padding:2rem;
+    color:var(--sub);
+}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+    .container {
+        grid-template-columns:1fr;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<h1>🏪 Community Marketplace</h1>
+<p>Discover shops, services & farming support near you</p>
+</div>
+
+<div class="container">
+
+<!-- LEFT -->
+<div class="card">
+
+<h3>Add Your Listing</h3>
+
+<div class="input-group">
+<label>Name</label>
+<input id="name" placeholder="Shop / Service Name">
+</div>
+
+<div class="input-group">
+<label>Type</label>
+<select id="type">
+<option>Fertilizer Shop</option>
+<option>Equipment Rental</option>
+<option>Seed Supplier</option>
+<option>Market / Mandi</option>
+<option>Warehouse</option>
+<option>Transport Service</option>
+</select>
+</div>
+
+<div class="input-group">
+<label>Location</label>
+<input id="location" placeholder="City / Village">
+</div>
+
+<div class="input-group">
+<label>Contact</label>
+<input id="contact" placeholder="Phone Number">
+</div>
+
+<div class="input-group">
+<label>Description</label>
+<textarea id="desc" placeholder="Details about your service"></textarea>
+</div>
+
+<button onclick="addShop()">➕ Add Listing</button>
+
+</div>
+
+<!-- RIGHT -->
+<div class="card">
+
+<h3>📍 Available Services</h3>
+
+<input id="search" class="search-box" placeholder="Search by name, type, location..." oninput="filterShops()">
+
+<div id="list" class="grid"></div>
+
+</div>
+
+</div>
+
+<script>
+
+// MOCK STORAGE (for UI testing)
+let allShops = [];
+
+// ADD SHOP
+function addShop() {
+
+    const shop = {
+        id: Date.now(),
+        name: document.getElementById("name").value,
+        type: document.getElementById("type").value,
+        location: document.getElementById("location").value,
+        contact: document.getElementById("contact").value,
+        description: document.getElementById("desc").value
+    };
+
+    allShops.unshift(shop);
+    render(allShops);
+}
+
+// RENDER
+function render(data) {
+
+    const list = document.getElementById("list");
+    list.innerHTML = "";
+
+    if(data.length === 0) {
+        list.innerHTML = `<div class="empty">No listings found</div>`;
+        return;
+    }
+
+    data.forEach(s => {
+
+        list.innerHTML += `
+        <div class="shop">
+            <h3>${s.name}</h3>
+            <span class="tag">${s.type}</span>
+
+            <p style="margin-top:10px;">📍 ${s.location}</p>
+
+            <p>📝 ${s.description}</p>
+
+            <a class="call-btn" href="tel:${s.contact}">📞 Call</a>
+        </div>`;
+    });
+}
+
+// SEARCH
+function filterShops() {
+
+    const q = document.getElementById("search").value.toLowerCase();
+
+    const filtered = allShops.filter(s =>
+        s.name.toLowerCase().includes(q) ||
+        s.type.toLowerCase().includes(q) ||
+        s.location.toLowerCase().includes(q)
+    );
+
+    render(filtered);
+}
+
+</script>
+
+</body>
+</html>
+```

@@ -13,7 +13,7 @@ load_dotenv()
 genai.configure(api_key=os.getenv("Google_Api_Key2"))
 
 # Initialize Gemini model
-gemini_model = genai.GenerativeModel("gemini-2.0-flash")
+gemini_model = genai.GenerativeModel("gemini-2.5-flash")
 
 # Load YOLOv11 classification model
 model = YOLO("model/best.pt")  # 🔹 Replace with path to your trained weights

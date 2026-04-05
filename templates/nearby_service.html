@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>CropAI | Nearby Services</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+<style>
+
+:root {
+    --bg:#0b1410;
+    --card:#111a14;
+    --border:#1e2b22;
+    --primary:#c4ff61;
+    --text:#eaf9e6;
+    --sub:#8fa89a;
+}
+
+body {
+    margin:0;
+    font-family:"Outfit",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+}
+
+/* TOP BAR */
+.topbar {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 5%;
+    border-bottom:1px solid var(--border);
+}
+
+.topbar h2 { color:var(--primary); }
+
+.topbar input {
+    width:300px;
+    padding:10px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:#0f1d15;
+    color:var(--text);
+}
+
+/* LAYOUT */
+.wrapper {
+    display:flex;
+    height:calc(100vh - 60px);
+}
+
+.sidebar {
+    width:340px;
+    border-right:1px solid var(--border);
+    display:flex;
+    flex-direction:column;
+}
+
+.section {
+    padding:16px;
+    border-bottom:1px solid var(--border);
+}
+
+.filters {
+    display:flex;
+    gap:6px;
+}
+
+.filter {
+    padding:6px 10px;
+    border-radius:10px;
+    background:#0f1d15;
+    cursor:pointer;
+    font-size:12px;
+}
+
+.filter.active {
+    background:var(--primary);
+    color:#000;
+}
+
+.list {
+    flex:1;
+    overflow-y:auto;
+    padding:12px;
+}
+
+/* ITEM */
+.item {
+    padding:14px;
+    border-radius:14px;
+    margin-bottom:12px;
+    background:#0f1d15;
+    border:1px solid transparent;
+    cursor:pointer;
+}
+
+.item:hover {
+    border:1px solid var(--primary);
+}
+
+.meta {
+    font-size:12px;
+    color:var(--sub);
+    margin-top:5px;
+}
+
+/* MAP */
+#map { flex:1; }
+
+</style>
+</head>
+
+<body>
+
+<div class="topbar">
+    <h2>📍 Nearby Services</h2>
+    <input id="search" placeholder="Search..." oninput="filterList()">
+</div>
+
+<div class="wrapper">
+
+<div class="sidebar">
+
+<div class="section">
+<div class="filters">
+<div class="filter active" onclick="setFilter('all',this)">All</div>
+<div class="filter" onclick="setFilter('fertilizer',this)">Fertilizer</div>
+<div class="filter" onclick="setFilter('market',this)">Market</div>
+<div class="filter" onclick="setFilter('warehouse',this)">Warehouse</div>
+</div>
+</div>
+
+<div class="list" id="list"></div>
+
+</div>
+
+<div id="map"></div>
+
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+
+// 🔁 TOGGLE (KEEP FALSE IN PRODUCTION)
+const USE_MOCK = false;
+
+// 🌍 MAP INIT
+const map = L.map('map').setView([20.5937, 78.9629], 5);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+let allData = {};
+let currentFilter = "all";
+let markers = [];
+
+const colors = {
+    fertilizer:"green",
+    market:"blue",
+    warehouse:"orange"
+};
+
+// CLEAR MARKERS
+function clearMarkers(){
+    markers.forEach(m=>map.removeLayer(m));
+    markers=[];
+}
+
+// ADD MARKER
+function addMarker(item,type){
+
+    if (!item.lat || !item.lon) return;
+
+    const m = L.circleMarker([item.lat,item.lon],{
+        color:colors[type],
+        radius:8
+    }).addTo(map);
+
+    m.bindPopup(`
+        <b>${item.name}</b><br>
+        ${item.distance_km} km<br>
+        Source: ${item.source}
+    `);
+
+    markers.push(m);
+}
+
+// RENDER
+function render(data){
+
+    const list = document.getElementById("list");
+    list.innerHTML="";
+    clearMarkers();
+
+    Object.keys(data || {}).forEach(type=>{
+
+        if(currentFilter!=="all" && currentFilter!==type) return;
+
+        (data[type] || []).forEach(item=>{
+
+            addMarker(item,type);
+
+            list.innerHTML += `
+            <div class="item" onclick="map.setView([${item.lat},${item.lon}],14)">
+                <strong>${item.name || "Unknown"}</strong>
+                <div class="meta">📍 ${item.distance_km || "-"} km</div>
+                <div class="meta">${type}</div>
+                <div class="meta">Source: ${item.source || "-"}</div>
+            </div>`;
+        });
+    });
+
+    if(list.innerHTML===""){
+        list.innerHTML = "<p style='color:var(--sub)'>No services found</p>";
+    }
+}
+
+// FILTER
+function setFilter(type,el){
+    currentFilter=type;
+    document.querySelectorAll(".filter").forEach(f=>f.classList.remove("active"));
+    el.classList.add("active");
+    render(allData);
+}
+
+// SEARCH
+function filterList(){
+    const q=document.getElementById("search").value.toLowerCase();
+
+    const filtered={};
+
+    Object.keys(allData).forEach(type=>{
+        filtered[type]=(allData[type] || []).filter(i =>
+            (i.name || "").toLowerCase().includes(q)
+        );
+    });
+
+    render(filtered);
+}
+
+// 🔥 MOCK DATA
+function loadMockData(){
+
+    const mock = {
+        fertilizer:[
+            {
+                name:"Sri Lakshmi Fertilizers",
+                lat:17.3025,
+                lon:78.275,
+                distance_km:0.27,
+                source:"DB"
+            },
+            {
+                name:"Patel Agro Store",
+                lat:17.3378,
+                lon:78.3163,
+                distance_km:5.62,
+                source:"OSM"
+            }
+        ],
+        market:[
+            {
+                name:"Rythu Bazaar",
+                lat:17.3008,
+                lon:78.2802,
+                distance_km:0.49,
+                source:"DB"
+            }
+        ],
+        warehouse:[
+            {
+                name:"Cold Storage Unit",
+                lat:17.31,
+                lon:78.27,
+                distance_km:1.0,
+                source:"DB"
+            }
+        ]
+    };
+
+    allData = mock;
+
+    map.setView([17.3025, 78.275], 12);
+
+    L.marker([17.3025, 78.275])
+        .addTo(map)
+        .bindPopup("📍 Mock Location");
+
+    render(mock);
+}
+
+// 🔥 REAL API
+async function loadRealData(){
+
+    const list = document.getElementById("list");
+    list.innerHTML = "<p style='padding:10px;'>⏳ Loading nearby services...</p>";
+
+    try {
+
+        const res = await fetch("/api/nearby-services");
+        const data = await res.json();
+
+        if (data.error) throw new Error(data.error);
+
+        allData = data.services || {};
+
+        if (data.location) {
+            map.setView([data.location.lat, data.location.lon], 12);
+
+            L.marker([data.location.lat, data.location.lon])
+                .addTo(map)
+                .bindPopup("📍 You are here");
+        }
+
+        render(allData);
+
+    } catch (err) {
+        list.innerHTML = `<p style="color:red; padding:10px;">❌ ${err.message}</p>`;
+    }
+}
+
+// 🚀 INIT
+function loadData(){
+    if (USE_MOCK) {
+        loadMockData();
+    } else {
+        loadRealData();
+    }
+}
+
+loadData();
+
+</script>
+
+</body>
+</html>

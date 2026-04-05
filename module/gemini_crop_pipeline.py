@@ -16,7 +16,7 @@ if not API_KEY:
     raise EnvironmentError("❌ Missing Gemini API Key: Set GEMINI_API_KEY or Google_Api_Key2")
 genai.configure(api_key=API_KEY)
 
-MODEL_NAME = "gemini-2.0-flash"  # can also use "gemini-2.0-flash" for faster responses
+MODEL_NAME = "gemini-2.5-flash"  # can also use "gemini-2.0-flash" for faster responses
 
 
 # 🧩 --- Utility: Safe Gemini JSON Call ---

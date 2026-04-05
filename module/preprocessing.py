@@ -14,7 +14,7 @@ dotenv.load_dotenv()
 
 # ---------- Gemini AI Setup ----------
 genai.configure(api_key=os.getenv('Google_Api_Key2'))
-model = genai.GenerativeModel('gemini-2.0-flash')
+model = genai.GenerativeModel('gemini-2.5-flash')
 
 # ---------- OpenCage Setup ----------
 GEOCODER_KEY = "7edf47c44cce409b892facc8ba369bbf"

@@ -8,7 +8,7 @@ load_dotenv()
 genai.configure(api_key=os.getenv("Google_Api_Key2"))
 
 # Use Gemini conversational model
-model = genai.GenerativeModel("gemini-2.0-flash")
+model = genai.GenerativeModel("gemini-2.5-flash")
 
 # In-memory conversation memory per session (optional: persist to DB/Redis later)
 FIN_CONVERSATION_MEMORY = {}

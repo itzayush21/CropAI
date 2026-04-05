@@ -447,6 +447,38 @@
                 url('https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=1600&q=80') no-repeat center center/cover;
         }
 
+        #ai-explainer {
+            background: linear-gradient(180deg, rgba(8, 15, 8, 0.85), rgba(8, 15, 8, 0.9)),
+                url("https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&w=800&q=80") no-repeat center center/cover;
+        }
+
+
+        #inventory {
+            background: linear-gradient(180deg, rgba(8, 15, 8, 0.85), rgba(8, 15, 8, 0.9)),
+                url("https://plus.unsplash.com/premium_photo-1726797804028-aeffb8fa863a?q=80&w=1102&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D") no-repeat center center/cover;
+        }
+
+        #community-market {
+            background: linear-gradient(180deg, rgba(8, 15, 8, 0.85), rgba(8, 15, 8, 0.9)),
+                url("https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=800&q=80") no-repeat center center/cover;
+        }
+
+        #services {
+            background: linear-gradient(180deg, rgba(8, 15, 8, 0.85), rgba(8, 15, 8, 0.9)),
+                url("https://plus.unsplash.com/premium_photo-1682310071124-33632135b2ee?q=80&w=1212&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D") no-repeat center center/cover;
+
+        }
+
+        #decision {
+            background: linear-gradient(180deg, rgba(8, 15, 8, 0.85), rgba(8, 15, 8, 0.9)),
+                url("https://images.unsplash.com/photo-1559526324-593bc073d938?auto=format&fit=crop&w=800&q=80") no-repeat center center/cover;
+        }
+
+        #equipment{
+            background: linear-gradient(180deg, rgba(8, 15, 8, 0.85), rgba(8, 15, 8, 0.9)),
+                url("https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=800&q=80") no-repeat center center/cover;
+        }
+
         /* Responsive Behavior */
         @media (max-width: 900px) {
             .module-section {
@@ -564,6 +596,12 @@
                 Finance</button>
             <button onclick="document.querySelector('#disease').scrollIntoView({ behavior: 'smooth' })">🧬
                 Disease</button>
+            <button onclick="document.querySelector('#ai-explainer').scrollIntoView({ behavior: 'smooth' })">🧠 AI</button>
+<button onclick="document.querySelector('#profit').scrollIntoView({ behavior: 'smooth' })">💰 Profit</button>
+<button onclick="document.querySelector('#inventory').scrollIntoView({ behavior: 'smooth' })">📦 Inventory</button>
+<button onclick="document.querySelector('#community-market').scrollIntoView({ behavior: 'smooth' })">
+🏪 Marketplace
+</button>
         </div>
     </section>
 
@@ -601,6 +639,112 @@
             </div>
         </div>
     </section>
+
+    <!-- Community Services / Marketplace -->
+<section class="module-section" id="community-market">
+    <div class="module-text">
+        <h2>🏪 Community Marketplace 
+            <span style="background:#ff4d4d;color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;margin-left:10px;">NEW</span>
+        </h2>
+        <p>
+            Enables farmers and local vendors to register their own <strong>shops, markets, and services</strong> 
+            directly on the platform. Users can list fertilizer stores, equipment rentals, warehouses, or mandi points 
+            with location and contact details.  
+            This creates a <strong>localized farming ecosystem</strong> where farmers can discover, connect, and support nearby services.
+        </p>
+        <button onclick="window.location.href='/module/community-market'">Explore</button>
+    </div>
+    <div class="module-img">
+        <img src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=800&q=80">
+    </div>
+</section>
+
+    <!-- AI Explainer -->
+<section class="module-section" id="ai-explainer">
+    <div class="module-text">
+        <h2>🧠 AI Explainer 
+            <span style="background:#ff4d4d;color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;margin-left:10px;">NEW</span>
+        </h2>
+        <p>
+            Converts farmer inputs (text, images, files) into step-by-step explanations with AI-generated scripts 
+            and audio guidance. Simplifies complex agricultural concepts for better understanding and decision-making.
+        </p>
+        <button onclick="window.location.href='/module/ai-explainer'">Explore</button>
+    </div>
+    <div class="module-img">
+        <img src="https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?auto=format&fit=crop&w=800&q=80">
+    </div>
+</section>
+
+
+
+<!-- Inventory -->
+<section class="module-section" id="inventory">
+    <div class="module-text">
+        <h2>📦 Inventory Manager 
+            <span style="background:#ff4d4d;color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;margin-left:10px;">NEW</span>
+        </h2>
+        <p>
+            Track seeds, fertilizers, and equipment usage with farm-specific history. 
+            Prevent shortages and optimize resource planning efficiently.
+        </p>
+        <button onclick="window.location.href='/module/inventory'">Explore</button>
+    </div>
+    <div class="module-img">
+        <img src="https://plus.unsplash.com/premium_photo-1726797804028-aeffb8fa863a?q=80&w=1102&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">
+    </div>
+</section>
+
+<!-- Decision Comparison -->
+<section class="module-section" id="decision">
+    <div class="module-text">
+        <h2>⚖️ Decision Comparison 
+            <span style="background:#ff4d4d;color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;margin-left:10px;">NEW</span>
+        </h2>
+        <p>
+            Compare multiple crops using profit, eco-score, and suitability. 
+            Get ranked, data-driven recommendations for the best farming decision.
+        </p>
+        <button onclick="window.location.href='/module/decision'">Explore</button>
+    </div>
+    <div class="module-img">
+        <img src="https://images.unsplash.com/photo-1559526324-593bc073d938?auto=format&fit=crop&w=800&q=80">
+    </div>
+</section>
+
+<!-- Equipment Recommendation -->
+<section class="module-section" id="equipment">
+    <div class="module-text">
+        <h2>⚙️ Equipment Recommendation 
+            <span style="background:#ff4d4d;color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;margin-left:10px;">NEW</span>
+        </h2>
+        <p>
+            Suggests optimal farming tools based on crop type and land size. 
+            Boost efficiency and productivity with the right equipment choices.
+        </p>
+        <button onclick="window.location.href='/module/equipment'">Explore</button>
+    </div>
+    <div class="module-img">
+        <img src="https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=800&q=80">
+    </div>
+</section>
+
+<!-- Nearby Services -->
+<section class="module-section" id="services">
+    <div class="module-text">
+        <h2>📍 Nearby Services 
+            <span style="background:#ff4d4d;color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;margin-left:10px;">NEW</span>
+        </h2>
+        <p>
+            Locate fertilizer shops, markets, and warehouses using map-based APIs. 
+            Access essential services quickly for smoother farming operations.
+        </p>
+        <button onclick="window.location.href='/nearby-services'">Explore</button>
+    </div>
+    <div class="module-img">
+        <img src="https://plus.unsplash.com/premium_photo-1682310071124-33632135b2ee?q=80&w=1212&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D">
+    </div>
+</section>
 
     <!-- MODULE SECTIONS (PUZZLE STYLE) -->
     <section class="module-section" id="crop-suggestor">

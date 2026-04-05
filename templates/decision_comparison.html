@@ -1,0 +1,366 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>CropAI | Decision Comparison</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+/* =========================
+   DESIGN SYSTEM
+========================= */
+:root {
+    --bg:#0b1410;
+    --card:rgba(255,255,255,0.05);
+    --border:rgba(255,255,255,0.08);
+    --primary:#c4ff61;
+    --accent:#7affd8;
+    --danger:#ff6b6b;
+    --text:#eaf9e6;
+    --sub:#9db59a;
+}
+
+* {
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body {
+    font-family:"Outfit",sans-serif;
+    background:linear-gradient(180deg,#0b1410,#0f1d15);
+    color:var(--text);
+}
+
+/* HEADER */
+.header {
+    padding:1.5rem 5%;
+    border-bottom:1px solid var(--border);
+}
+
+.header h1 {
+    color:var(--primary);
+    margin-bottom:5px;
+}
+
+/* LAYOUT */
+.container {
+    display:grid;
+    grid-template-columns:320px 1fr;
+    gap:2rem;
+    padding:2rem 5%;
+}
+
+/* CARD */
+.card {
+    background:var(--card);
+    border:1px solid var(--border);
+    padding:1.5rem;
+    border-radius:18px;
+    backdrop-filter:blur(10px);
+}
+
+/* FORM */
+.card h3 {
+    margin-bottom:10px;
+}
+
+.input-group {
+    margin-bottom:12px;
+}
+
+label {
+    font-size:13px;
+    color:var(--sub);
+}
+
+input, select {
+    width:100%;
+    padding:12px;
+    margin-top:5px;
+    border-radius:12px;
+    border:1px solid var(--border);
+    background:transparent;
+    color:var(--text);
+}
+
+input:focus {
+    border:1px solid var(--primary);
+    outline:none;
+}
+
+/* BUTTON */
+button {
+    width:100%;
+    padding:12px;
+    border:none;
+    border-radius:12px;
+    background:linear-gradient(135deg,var(--primary),var(--accent));
+    font-weight:600;
+    cursor:pointer;
+    margin-top:10px;
+}
+
+button:hover {
+    transform:scale(1.03);
+}
+
+/* TABLE */
+table {
+    width:100%;
+    border-collapse:separate;
+    border-spacing:0 8px;
+    margin-top:1rem;
+}
+
+th {
+    text-align:center;
+    color:var(--primary);
+    font-weight:600;
+}
+
+td {
+    background:rgba(255,255,255,0.04);
+    padding:12px;
+    text-align:center;
+    border-radius:10px;
+}
+
+tr.best td {
+    background:rgba(196,255,97,0.15);
+}
+
+/* VERDICT */
+.verdict {
+    margin-top:1rem;
+    padding:1.2rem;
+    border-radius:14px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--border);
+}
+
+.verdict h3 {
+    margin-bottom:5px;
+}
+
+.tag {
+    padding:4px 10px;
+    border-radius:10px;
+    font-size:12px;
+    margin-left:8px;
+}
+
+.green { background:#2ecc71; }
+.orange { background:#f39c12; }
+.red { background:#e74c3c; }
+
+ul {
+    margin-top:8px;
+    padding-left:20px;
+    color:var(--sub);
+}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+    .container {
+        grid-template-columns:1fr;
+    }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<h1>⚖️ Decision Comparison Tool</h1>
+<p style="color:var(--sub)">Compare crops using AI + ML signals</p>
+</div>
+
+<div class="container">
+
+<!-- LEFT -->
+<div class="card">
+
+<h3>Decision Input</h3>
+
+<div class="input-group">
+<label>Crops</label>
+<input id="crops" placeholder="rice, wheat, maize">
+</div>
+
+<div class="input-group">
+<label>Language</label>
+<select id="language">
+    <option value="english">English</option>
+    <option value="tamil">Tamil</option>
+    <option value="hindi">Hindi</option>
+</select>
+</div>
+
+<button onclick="compare()">Compare Crops</button>
+
+</div>
+
+<!-- RIGHT -->
+<div class="card">
+
+<h3>📊 Comparison Insights</h3>
+
+<table id="table"></table>
+
+<div id="aiDecision"></div>
+
+</div>
+
+</div>
+
+<script>
+
+async function compare() {
+
+    const table = document.getElementById("table");
+    const decisionDiv = document.getElementById("aiDecision");
+
+    const cropsInput = document.getElementById("crops").value.trim();
+    const language = document.getElementById("language").value;
+
+    if (!cropsInput) {
+        alert("Please enter crops");
+        return;
+    }
+
+    const crops = cropsInput.split(",").map(c => c.trim());
+
+    const payload = {
+        crops: crops,
+        context: {
+            language: language   // ✅ ONLY INPUT NOW
+        }
+    };
+
+    table.innerHTML = "<tr><td colspan='5'>⏳ Analyzing crops...</td></tr>";
+    decisionDiv.innerHTML = "";
+
+    try {
+        const res = await fetch("/api/decision", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!data.output) {
+            throw new Error("Invalid response");
+        }
+
+        renderTable(data.output.ranked_signals);
+        renderDecision(data.output.ai_decision);
+
+    } catch (err) {
+        table.innerHTML = `<tr><td colspan="5" style="color:red;">❌ ${err.message}</td></tr>`;
+        decisionDiv.innerHTML = "";
+    }
+}
+
+
+/* =========================
+   TABLE
+========================= */
+function renderTable(data) {
+
+    if (!Array.isArray(data)) return;
+
+    let html = `
+    <tr>
+        <th>Crop</th>
+        <th>Profit ₹</th>
+        <th>Eco</th>
+        <th>Suitability</th>
+        <th>Score</th>
+    </tr>`;
+
+    data.forEach((c, i) => {
+
+        html += `
+        <tr class="${i === 0 ? 'best' : ''}">
+            <td>${c.crop || "-"}</td>
+            <td>${c.profit_estimate || "-"}</td>
+            <td>${c.eco_score || "-"}</td>
+            <td>${c.suitability_score || "-"}</td>
+            <td>${c.heuristic_score || "-"}</td>
+        </tr>`;
+    });
+
+    document.getElementById("table").innerHTML = html;
+}
+
+
+/* =========================
+   AI DECISION
+========================= */
+function renderDecision(ai) {
+
+    if (!ai || !ai.final_recommendation) {
+        document.getElementById("aiDecision").innerHTML =
+            "<p style='color:red;'>⚠️ Invalid AI response</p>";
+        return;
+    }
+
+    const reasoning = Array.isArray(ai.final_recommendation.reasoning)
+        ? ai.final_recommendation.reasoning
+        : [ai.final_recommendation.reasoning || "No reasoning"];
+
+    let html = `
+    <div class="verdict">
+        <h3>🏆 ${ai.final_recommendation.best_crop || "N/A"}</h3>
+        <p><strong>Confidence:</strong> ${ai.final_recommendation.confidence_level || "-"}</p>
+        <ul>
+            ${reasoning.map(r => `<li>${r}</li>`).join("")}
+        </ul>
+    </div>
+    `;
+
+    const comparisons = Array.isArray(ai.crop_comparison)
+        ? ai.crop_comparison
+        : [];
+
+    comparisons.forEach(c => {
+
+        let color = "orange";
+        if (c.verdict?.includes("பரிந்துரைக்கப்படுகிறது") || c.verdict === "Recommended") color = "green";
+        if (c.verdict?.includes("அபாய") || c.verdict === "Risky") color = "red";
+
+        const risks = Array.isArray(c.main_risks)
+            ? c.main_risks.join(", ")
+            : (c.main_risks || "Not specified");
+
+        const whenWorks = c.when_it_makes_sense || "Not specified";
+
+        html += `
+        <div class="verdict">
+            <h4>${c.crop || "-"}
+            <span class="tag ${color}">${c.verdict || "-"}</span></h4>
+            <p>${c.why || "-"}</p>
+            <p><strong>Risks:</strong> ${risks}</p>
+            <p><strong>When it works:</strong> ${whenWorks}</p>
+        </div>`;
+    });
+
+    document.getElementById("aiDecision").innerHTML = html;
+}
+
+
+/* ENTER KEY */
+document.addEventListener("keypress", function(e) {
+    if (e.key === "Enter") compare();
+});
+
+</script>
+
+</body>
+</html>
+
