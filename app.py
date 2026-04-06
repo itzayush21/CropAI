@@ -4,7 +4,7 @@ from models import db
 from auth.auth_client import create_supabase_client
 from module.preprocessing import enrich_user_data,get_lat_lon_from_location
 from sqlalchemy.orm.attributes import flag_modified
-from models import db, User, SoilDB, WeatherDB, CropSuggestionDB, FertilizerSuggestionDB, PestControlDB, FinancialAdvisorDB, CropRoom
+from models import db, User, SoilDB, WeatherDB, CropSuggestionDB, FertilizerSuggestionDB, PestControlDB, FinancialAdvisorDB, CropRoom, NearbyService, InventoryStore
 from module.pest_control_genai import generate_pest_control_advice
 from module.genai_crop_advisor import generate_crop_suggestions
 from module.fertilizer_genai import generate_fertilizer_recommendations
@@ -16,6 +16,9 @@ from module.disease_pipeline import run_yolo_classification, get_gemini_guidance
 from module.ai_explainer import run_ai_explainer
 from module.decision_engine import run_decision_engine
 from module.nearby_services_engine import find_nearby_services
+from module.equipment_module import generate_equipment_recommendations
+from module.invent_summary import generate_inventory_summary
+import time
 import uuid
 import math
 import json
@@ -1213,6 +1216,50 @@ def ai_explainer_api():
         }), 500
 
 
+@app.route("/module/equipment")
+def equipment():
+    return render_template("equipment_advisor.html")
+
+
+# =========================================================
+# 🚜 EQUIPMENT RECOMMENDATION API
+# =========================================================
+@app.route("/api/equipment-recommend", methods=["POST"])
+def equipment_recommend():
+
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        data = request.get_json() or {}
+
+        # 🔹 CONTEXT (from frontend)
+        context = {
+            "crop": data.get("crop"),
+            "land_size": data.get("land_size"),
+            "soil_type": data.get("soil_type"),
+            "location": data.get("location"),
+            "budget": data.get("budget"),
+            "farming_type": data.get("farming_type"),
+            "irrigation": data.get("irrigation")
+        }
+
+        user_query = data.get("query")
+
+        # 🚀 CALL YOUR GEMINI FUNCTION
+        result = generate_equipment_recommendations(
+            context=context,
+            user_query=user_query
+        )
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({
+            "error": "Failed to generate recommendations",
+            "details": str(e)
+        }), 500
+
 # ⚖️ DECISION COMPARISON
 @app.route("/module/decision")
 def decision():
@@ -1323,17 +1370,272 @@ def decision_api():
 def inventory():
     return render_template("inventory.html")
 
+@app.route("/api/inventory", methods=["GET"])
+def get_inventory():
+
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    user_id = session["user"]["id"]
+
+    record = InventoryStore.query.filter_by(user_id=user_id).first()
+
+    if not record:
+        return jsonify({"inventory": []})
+
+    return jsonify({
+        "inventory": record.data.get("items", [])
+    })
+
+
+# ============================================================
+# ➕ ADD ITEM
+# ============================================================
+@app.route("/api/inventory/add", methods=["POST"])
+def add_inventory():
+
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    user_id = session["user"]["id"]
+    data = request.get_json()
+
+    record = InventoryStore.query.filter_by(user_id=user_id).first()
+
+    if not record:
+        record = InventoryStore(
+            user_id=user_id,
+            data={"items": []}
+        )
+        db.session.add(record)
+
+    item = {
+        "id": int(time.time() * 1000),
+        "name": data.get("name"),
+        "category": data.get("category"),
+        "unit": data.get("unit"),
+        "quantity": data.get("quantity", 0),
+        "threshold": data.get("threshold", 0),
+        "usage_rate": data.get("usage_rate", 0),
+        "expiry": data.get("expiry"),
+        "created_at": datetime.utcnow().isoformat()
+    }
+
+    record.data["items"].append(item)
+    db.session.commit()
+
+    return jsonify({"message": "Item added"})
+
+
+# ============================================================
+# 🔽 USE ITEM
+# ============================================================
+@app.route("/api/inventory/use", methods=["POST"])
+def use_inventory():
+
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    user_id = session["user"]["id"]
+    data = request.get_json()
+
+    record = InventoryStore.query.filter_by(user_id=user_id).first()
+
+    if not record:
+        return jsonify({"error": "Inventory not found"}), 404
+
+    for item in record.data["items"]:
+        if item["id"] == data.get("id"):
+            item["quantity"] = max(0, item["quantity"] - 1)
+
+    db.session.commit()
+
+    return jsonify({"message": "Updated"})
+
+
+# ============================================================
+# ❌ DELETE ITEM
+# ============================================================
+@app.route("/api/inventory/delete", methods=["POST"])
+def delete_inventory():
+
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    user_id = session["user"]["id"]
+    data = request.get_json()
+
+    record = InventoryStore.query.filter_by(user_id=user_id).first()
+
+    if not record:
+        return jsonify({"error": "Inventory not found"}), 404
+
+    record.data["items"] = [
+        i for i in record.data["items"]
+        if i["id"] != data.get("id")
+    ]
+
+    db.session.commit()
+
+    return jsonify({"message": "Deleted"})
+
+
+# ============================================================
+# ⚠️ RISK + ALERT ENGINE
+# ============================================================
+@app.route("/api/inventory/alerts", methods=["GET"])
+def inventory_alerts():
+
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    user_id = session["user"]["id"]
+
+    record = InventoryStore.query.filter_by(user_id=user_id).first()
+
+    if not record:
+        return jsonify({"alerts": []})
+
+    alerts = []
+
+    for item in record.data.get("items", []):
+
+        # LOW STOCK
+        if item["quantity"] <= item["threshold"]:
+            alerts.append({
+                "type": "low",
+                "message": f"{item['name']} is low"
+            })
+
+        # RUN OUT SOON
+        if item.get("usage_rate"):
+            days = item["quantity"] / (item["usage_rate"] or 1)
+            if days < 3:
+                alerts.append({
+                    "type": "risk",
+                    "message": f"{item['name']} will run out in {round(days,1)} days"
+                })
+
+        # EXPIRY
+        if item.get("expiry"):
+            try:
+                days_left = (datetime.fromisoformat(item["expiry"]) - datetime.utcnow()).days
+                if days_left < 5:
+                    alerts.append({
+                        "type": "expiry",
+                        "message": f"{item['name']} expiring soon"
+                    })
+            except:
+                pass
+
+    return jsonify({"alerts": alerts})
+
+
+# ============================================================
+# 🧠 AI SUMMARY (LLM READY)
+# ============================================================
+@app.route("/api/inventory/summary", methods=["POST"])
+def inventory_summary():
+
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    try:
+        data = request.get_json()
+        inventory = data.get("inventory", [])
+
+        # 🚀 CALL GENAI
+        result = generate_inventory_summary(inventory)
+
+        return jsonify(result)
+
+    except Exception as e:
+        return jsonify({
+            "error": "Failed to generate summary",
+            "details": str(e)
+        }), 500
+
 
 # 🏪 MARKETPLACE
 @app.route("/module/marketplace")
 def marketplace():
     return render_template("community_marketplace.html")
 
+# ==========================================
+# 📍 ADD NEARBY SERVICE
+# ==========================================
+@app.route("/api/nearby/add", methods=["POST"])
+def add_nearby_service():
+
+    data = request.get_json()
+
+    try:
+        # 🔍 VALIDATION
+        required_fields = ["name", "type", "lat", "lng"]
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify({"error": f"{field} is required"}), 400
+            
+        user = User.query.filter_by(userid=session["user"]["id"]).first()
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        
+
+        # 🏷️ CLEAN TAGS
+        tags = data.get("tags", [])
+        if isinstance(tags, list):
+            tags = [t.strip().lower() for t in tags if t.strip()]
+        else:
+            tags = []
+
+        # 📦 CREATE OBJECT
+        service = NearbyService(
+            user_id=user.userid,  # 🔥 later replace with session user
+            name=data["name"],
+            service_type=data["type"],
+            description=data.get("description"),
+            latitude=float(data["lat"]),
+            longitude=float(data["lng"]),
+            contact_number=data.get("contact"),
+            address=data.get("address"),
+            tags=tags,
+            source="user"
+        )
+
+        db.session.add(service)
+        db.session.commit()
+
+        return jsonify({
+            "message": "Service added successfully",
+            "service_id": service.id
+        })
+
+    except Exception as e:
+        print("[ADD SERVICE ERROR]:", str(e))
+        return jsonify({"error": str(e)}), 500
+
 
 # 📍 NEARBY SERVICES
 @app.route("/nearby-services")
 def nearby_services():
     return render_template("nearby_service.html")
+
+# ==========================================
+# 📍 NEARBY SERVICES API (DB + EXTERNAL)
+# ==========================================
+from math import radians, cos, sin, asin, sqrt
+
+def calc_distance(lat1, lon1, lat2, lon2):
+    R = 6371
+    dlat = radians(lat2 - lat1)
+    dlon = radians(lon2 - lon1)
+
+    a = sin(dlat/2)**2 + cos(radians(lat1)) * cos(radians(lat2)) * sin(dlon/2)**2
+    c = 2 * asin(sqrt(a))
+
+    return R * c
+
 
 @app.route("/api/nearby-services", methods=["GET"])
 def nearby_services_api():
@@ -1347,31 +1649,130 @@ def nearby_services_api():
         if not user:
             return jsonify({"error": "User not found"}), 404
 
-        # ✅ USER LOCATION (IMPORTANT)
-        lat = user.latitude
-        lon = user.longitude
+        lat, lon = user.latitude, user.longitude
 
-        if not lat or not lon:
+        if lat is None or lon is None:
             return jsonify({"error": "User location not available"}), 400
 
-        services = find_nearby_services(lat, lon)
+        # ==========================================
+        # 🔹 1. FETCH FROM DB
+        # ==========================================
+        db_services = NearbyService.query.all()
+        db_results = []
 
+        for s in db_services:
+            try:
+                # ✅ FIX TAGS (handles JSON + string)
+                tags = s.tags or []
+                if isinstance(tags, str):
+                    import json
+                    try:
+                        tags = json.loads(tags)
+                    except:
+                        tags = []
+
+                distance = calc_distance(lat, lon, s.latitude, s.longitude)
+
+                db_results.append({
+                    "name": s.name,
+                    "lat": s.latitude,
+                    "lng": s.longitude,
+                    "distance_km": round(distance, 2),
+                    "score": round(1 / (1 + distance), 3),
+                    "source": "cropai_store_db",
+                    "tags": [t.lower() for t in tags],
+                    "type": (s.service_type or "").lower()
+                })
+
+            except Exception as e:
+                print("[DB ITEM ERROR]:", e)
+
+        # ==========================================
+        # 🔹 2. FETCH EXTERNAL (SAFE)
+        # ==========================================
+        try:
+            external_services = find_nearby_services(lat, lon)
+            if not isinstance(external_services, list):
+                external_services = []
+        except Exception as e:
+            print("[EXTERNAL ERROR]:", e)
+            external_services = []
+
+        # ==========================================
+        # 🔹 3. MERGE
+        # ==========================================
+        all_services = db_results + external_services
+        print(f"[DEBUG] Total services: {len(all_services)}")
+
+        # ==========================================
+        # 🔹 4. FIXED GROUPING
+        # ==========================================
+        def group_services(services, keyword):
+            result = []
+
+            for s in services:
+                try:
+                    type_text = s.get("type", "")
+                    tags = s.get("tags", [])
+
+                    if isinstance(tags, str):
+                        import json
+                        try:
+                            tags = json.loads(tags)
+                        except:
+                            tags = []
+
+                    tags_text = " ".join(tags)
+
+                    full_text = (type_text + " " + tags_text).lower()
+
+                    if keyword in full_text:
+                        result.append(s)
+
+                except Exception as e:
+                    print("[GROUP ERROR]:", e)
+
+            return result
+
+        fertilizer_shops = sorted(
+            group_services(all_services, "fertilizer"),
+            key=lambda x: x.get("score", 0),
+            reverse=True
+        )[:10]
+
+        markets = sorted(
+            group_services(all_services, "market"),
+            key=lambda x: x.get("score", 0),
+            reverse=True
+        )[:10]
+
+        warehouses = sorted(
+            group_services(all_services, "warehouse"),
+            key=lambda x: x.get("score", 0),
+            reverse=True
+        )[:10]
+        
+        print(f"[DEBUG] Fertilizer Shops: {len(fertilizer_shops)}, Markets: {len(markets)}, Warehouses: {len(warehouses)}")
+
+        # ==========================================
+        # 🔹 5. RESPONSE
+        # ==========================================
         return jsonify({
             "location": {
                 "lat": lat,
                 "lon": lon
             },
-            "services": services
+            "fertilizer_shops": fertilizer_shops,
+            "markets": markets,
+            "warehouses": warehouses
         })
 
     except Exception as e:
+        print("[NEARBY SERVICES ERROR]:", str(e))
         return jsonify({
             "error": "Failed to fetch services",
             "details": str(e)
         }), 500
-
-
-
 
 if __name__ == '__main__':
     with app.app_context():

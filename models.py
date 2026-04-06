@@ -10,7 +10,7 @@ db = SQLAlchemy()
 # ---------------------------
 class User(db.Model):
     __tablename__ = 'users'
-    userid = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    userid = db.Column(db.String(36), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     latitude = db.Column(db.Float, nullable=True)
     longitude = db.Column(db.Float, nullable=True)
@@ -167,3 +167,52 @@ class CropRoom(db.Model):
         self.previous_steps = []
         self.user_notes = []
         self.ai_doubt_history = []
+        
+        
+# ---------------------------
+# 📍 NEARBY SERVICES / MARKETPLACE
+# ---------------------------
+# ============================
+# 📍 MODEL (FIXED)
+# ============================
+class NearbyService(db.Model):
+    __tablename__ = 'nearby_services'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(db.String(36), nullable=True)  # ⚠️ removed FK to avoid MySQL mismatch
+
+    name = db.Column(db.String(150), nullable=False)
+    service_type = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text)
+
+    latitude = db.Column(db.Float, nullable=False)
+    longitude = db.Column(db.Float, nullable=False)
+
+    contact_number = db.Column(db.String(20))
+    address = db.Column(db.String(255))
+
+    tags = db.Column(db.JSON)
+
+    rating = db.Column(db.Float, default=0.0)
+    total_reviews = db.Column(db.Integer, default=0)
+
+    source = db.Column(db.String(50), default="user")
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f"<NearbyService {self.name}>"
+    
+    
+class InventoryStore(db.Model):
+    __tablename__ = "inventory_store"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.String(36), unique=True)
+
+    # 🔥 FULL INVENTORY JSON
+    data = db.Column(db.JSON)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

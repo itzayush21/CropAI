@@ -166,76 +166,109 @@ const chat = document.getElementById("chatWindow");
 function addMsg(text, user=false, html=false) {
     const div = document.createElement("div");
     div.className = "msg";
+
     const bubble = document.createElement("div");
     bubble.className = "bubble " + (user ? "user" : "");
+
     html ? bubble.innerHTML = text : bubble.innerText = text;
+
     div.appendChild(bubble);
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
 }
 
-// MAIN API
+// ==============================
+// 🚜 MAIN API (FIXED)
+// ==============================
 async function getEquipment() {
 
     const payload = {
         crop: document.getElementById("crop").value,
-        land: document.getElementById("land").value,
+        land_size: document.getElementById("land").value + " acres",
         budget: document.getElementById("budget").value,
-        type: document.getElementById("type").value,
+        farming_type: document.getElementById("type").value,
         irrigation: document.getElementById("irrigation").value
     };
 
-    addMsg("Getting equipment suggestions...", true);
+    addMsg("Getting AI equipment recommendations...", true);
 
-    const res = await fetch("/api/equipment-suggestor", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify(payload)
-    });
+    try {
 
-    const data = await res.json();
-    renderEquipment(data);
+        const res = await fetch("/api/equipment-recommend", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (data.error) throw new Error(data.error);
+
+        renderEquipment(data);
+
+    } catch (err) {
+        addMsg("❌ Error: " + err.message);
+    }
 }
 
-// RENDER
+// ==============================
+// 🎨 RENDER (FIXED)
+// ==============================
 function renderEquipment(data) {
 
     let html = "";
 
-    data.equipment.forEach((e,i) => {
+    const equipment = data.recommended_equipment || [];
+
+    equipment.forEach((e) => {
         html += `
         <div class="equip-card">
-            <h4>⚙️ ${e.name}</h4>
-            <p><strong>Use:</strong> ${e.use}</p>
-            <p><strong>Cost:</strong> ₹${e.cost}</p>
-            <p><strong>Efficiency:</strong> ${e.efficiency}</p>
-            <p><strong>Suitable For:</strong> ${e.suitable}</p>
+            <h4>⚙️ ${e.equipment}</h4>
+            <p><strong>Purpose:</strong> ${e.purpose || "-"}</p>
+            <p><strong>Cost:</strong> ${e.estimated_cost || "-"}</p>
+            <p><strong>Power:</strong> ${e.power_requirement || "-"}</p>
+            <p><strong>Energy:</strong> ${e.fuel_or_energy || "-"}</p>
+            <p><strong>Land Suitability:</strong> ${e.suitable_land_size || "-"}</p>
+            <p><strong>Stage:</strong> ${e.recommended_stage || "-"}</p>
         </div>`;
     });
 
-    html += `<p><strong>💡 Recommendation:</strong> ${data.summary}</p>`;
+    html += `
+    <div class="equip-card">
+        <h4>🧠 AI Reasoning</h4>
+        <p>${data.reasoning || "-"}</p>
+    </div>`;
 
     addMsg(html, false, true);
 }
 
-// FOLLOW-UP
+// ==============================
+// 💬 FOLLOW-UP (OPTIONAL)
+// ==============================
 async function sendFollowUp() {
+
     const q = document.getElementById("followUp").value;
     if(!q) return;
 
-    addMsg(q,true);
+    addMsg(q, true);
 
-    const res = await fetch("/api/equipment-followup", {
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({query:q})
-    });
+    try {
 
-    const data = await res.json();
-    addMsg(data.answer);
+        const res = await fetch("/api/equipment-recommend", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({ query: q })
+        });
+
+        const data = await res.json();
+
+        renderEquipment(data);
+
+    } catch (err) {
+        addMsg("❌ Error: " + err.message);
+    }
 }
 
 </script>
-
 </body>
 </html>

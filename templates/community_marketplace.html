@@ -1,16 +1,15 @@
-```html
 <!DOCTYPE html>
 <html>
 <head>
-<title>CropAI | Marketplace</title>
+<title>CropAI | Nearby Services</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
 <style>
 
-/* =========================
-   DESIGN SYSTEM
-========================= */
 :root {
     --bg:#0b1410;
     --card:rgba(255,255,255,0.05);
@@ -21,16 +20,11 @@
     --sub:#9db59a;
 }
 
-* {
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-}
-
 body {
     font-family:"Outfit",sans-serif;
     background:linear-gradient(180deg,#0b1410,#0f1d15);
     color:var(--text);
+    margin:0;
 }
 
 /* HEADER */
@@ -38,19 +32,12 @@ body {
     padding:1.5rem 5%;
     border-bottom:1px solid var(--border);
 }
-
-.header h1 {
-    color:var(--primary);
-}
-
-.header p {
-    color:var(--sub);
-}
+.header h1 { color:var(--primary); }
 
 /* LAYOUT */
 .container {
     display:grid;
-    grid-template-columns:340px 1fr;
+    grid-template-columns:400px 1fr;
     gap:2rem;
     padding:2rem 5%;
 }
@@ -61,13 +48,10 @@ body {
     border:1px solid var(--border);
     padding:1.5rem;
     border-radius:18px;
-    backdrop-filter:blur(10px);
 }
 
-/* FORM */
-.input-group {
-    margin-bottom:12px;
-}
+/* INPUT */
+.input-group { margin-bottom:12px; }
 
 label {
     font-size:13px;
@@ -89,6 +73,12 @@ input:focus, textarea:focus {
     outline:none;
 }
 
+/* LOCKED INPUT */
+input[readonly] {
+    opacity:0.7;
+    cursor:not-allowed;
+}
+
 /* BUTTON */
 button {
     width:100%;
@@ -101,75 +91,21 @@ button {
     margin-top:10px;
 }
 
-button:hover {
-    transform:scale(1.03);
-}
-
-/* SEARCH */
-.search-box {
-    margin-top:10px;
-}
-
-/* GRID */
-.grid {
-    display:grid;
-    grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-    gap:1rem;
-    margin-top:1rem;
-}
-
-/* SHOP CARD */
-.shop {
-    background:rgba(255,255,255,0.04);
-    padding:1.2rem;
-    border-radius:14px;
-    border:1px solid transparent;
-    transition:0.3s;
-    position:relative;
-}
-
-.shop:hover {
+/* MAP */
+#map {
+    height: 500px;
+    border-radius: 18px;
     border:1px solid var(--border);
-    transform:translateY(-5px);
-}
-
-/* TITLE */
-.shop h3 {
-    color:var(--primary);
-    margin-bottom:5px;
-}
-
-/* TAG */
-.tag {
-    font-size:12px;
-    padding:4px 10px;
-    border-radius:10px;
-    background:rgba(255,255,255,0.1);
-}
-
-/* CONTACT BUTTON */
-.call-btn {
-    display:inline-block;
-    margin-top:10px;
-    padding:6px 12px;
-    border-radius:8px;
-    background:var(--primary);
-    color:#000;
-    font-size:12px;
-    text-decoration:none;
-}
-
-/* EMPTY STATE */
-.empty {
-    text-align:center;
-    padding:2rem;
-    color:var(--sub);
 }
 
 /* RESPONSIVE */
 @media(max-width:900px){
     .container {
         grid-template-columns:1fr;
+    }
+
+    #map {
+        height:300px;
     }
 }
 
@@ -179,130 +115,138 @@ button:hover {
 <body>
 
 <div class="header">
-<h1>🏪 Community Marketplace</h1>
-<p>Discover shops, services & farming support near you</p>
+<h1>📍 Nearby Services</h1>
+<p>Add and discover local agricultural services</p>
 </div>
 
 <div class="container">
 
-<!-- LEFT -->
+<!-- LEFT FORM -->
 <div class="card">
 
-<h3>Add Your Listing</h3>
+<h3>Add Service</h3>
 
 <div class="input-group">
 <label>Name</label>
-<input id="name" placeholder="Shop / Service Name">
+<input id="name" placeholder="Service Name">
 </div>
 
 <div class="input-group">
 <label>Type</label>
 <select id="type">
-<option>Fertilizer Shop</option>
-<option>Equipment Rental</option>
-<option>Seed Supplier</option>
-<option>Market / Mandi</option>
-<option>Warehouse</option>
-<option>Transport Service</option>
+<option value="fertilizer_shop">Fertilizer Shop</option>
+<option value="market">Market</option>
+<option value="warehouse">Warehouse</option>
+<option value="equipment_rental">Equipment Rental</option>
 </select>
 </div>
 
 <div class="input-group">
-<label>Location</label>
-<input id="location" placeholder="City / Village">
+<label>Description</label>
+<textarea id="desc"></textarea>
+</div>
+
+<div class="input-group">
+<label>Latitude (from map)</label>
+<input id="lat" type="number" step="any" readonly placeholder="Click on map">
+</div>
+
+<div class="input-group">
+<label>Longitude (from map)</label>
+<input id="lng" type="number" step="any" readonly placeholder="Click on map">
 </div>
 
 <div class="input-group">
 <label>Contact</label>
-<input id="contact" placeholder="Phone Number">
+<input id="contact">
 </div>
 
 <div class="input-group">
-<label>Description</label>
-<textarea id="desc" placeholder="Details about your service"></textarea>
+<label>Address</label>
+<input id="address">
 </div>
 
-<button onclick="addShop()">➕ Add Listing</button>
+<div class="input-group">
+<label>Tags (comma separated)</label>
+<input id="tags" placeholder="fertilizer,seed,pesticide">
+</div>
+
+<button onclick="addService()">➕ Add Service</button>
 
 </div>
 
-<!-- RIGHT -->
+<!-- RIGHT MAP -->
 <div class="card">
-
-<h3>📍 Available Services</h3>
-
-<input id="search" class="search-box" placeholder="Search by name, type, location..." oninput="filterShops()">
-
-<div id="list" class="grid"></div>
-
+<h3>Select Location</h3>
+<div id="map"></div>
 </div>
 
 </div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
 <script>
 
-// MOCK STORAGE (for UI testing)
-let allShops = [];
+// 🌍 INIT MAP (Chennai default)
+const map = L.map('map').setView([13.0827, 80.2707], 13);
 
-// ADD SHOP
-function addShop() {
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+}).addTo(map);
 
-    const shop = {
-        id: Date.now(),
-        name: document.getElementById("name").value,
-        type: document.getElementById("type").value,
-        location: document.getElementById("location").value,
-        contact: document.getElementById("contact").value,
-        description: document.getElementById("desc").value
-    };
+let marker;
 
-    allShops.unshift(shop);
-    render(allShops);
+// 📍 Set lat/lng from map
+function setLocation(lat, lng) {
+    document.getElementById("lat").value = lat;
+    document.getElementById("lng").value = lng;
 }
 
-// RENDER
-function render(data) {
+// 📍 On map click
+map.on('click', function(e) {
 
-    const list = document.getElementById("list");
-    list.innerHTML = "";
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
 
-    if(data.length === 0) {
-        list.innerHTML = `<div class="empty">No listings found</div>`;
+    setLocation(lat, lng);
+
+    if (marker) {
+        marker.setLatLng(e.latlng);
+    } else {
+        marker = L.marker(e.latlng).addTo(map);
+    }
+});
+
+// 🚀 API CALL
+async function addService() {
+
+    const payload = {
+        name: document.getElementById("name").value,
+        type: document.getElementById("type").value,
+        description: document.getElementById("desc").value,
+        lat: parseFloat(document.getElementById("lat").value),
+        lng: parseFloat(document.getElementById("lng").value),
+        contact: document.getElementById("contact").value,
+        address: document.getElementById("address").value,
+        tags: document.getElementById("tags").value.split(",")
+    };
+
+    if (!payload.lat || !payload.lng) {
+        alert("Please select a location on the map");
         return;
     }
 
-    data.forEach(s => {
-
-        list.innerHTML += `
-        <div class="shop">
-            <h3>${s.name}</h3>
-            <span class="tag">${s.type}</span>
-
-            <p style="margin-top:10px;">📍 ${s.location}</p>
-
-            <p>📝 ${s.description}</p>
-
-            <a class="call-btn" href="tel:${s.contact}">📞 Call</a>
-        </div>`;
+    await fetch("/api/nearby/add", {
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify(payload)
     });
-}
 
-// SEARCH
-function filterShops() {
-
-    const q = document.getElementById("search").value.toLowerCase();
-
-    const filtered = allShops.filter(s =>
-        s.name.toLowerCase().includes(q) ||
-        s.type.toLowerCase().includes(q) ||
-        s.location.toLowerCase().includes(q)
-    );
-
-    render(filtered);
+    alert("✅ Service Added Successfully!");
 }
 
 </script>
 
 </body>
 </html>
-```

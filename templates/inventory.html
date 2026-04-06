@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -7,163 +6,57 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <style>
-
-/* =========================
-   DESIGN SYSTEM
-========================= */
 :root {
-    --bg: #0b1410;
-    --card: rgba(255,255,255,0.06);
-    --border: rgba(255,255,255,0.08);
-    --primary: #c4ff61;
-    --accent: #7affd8;
-    --danger: #ff6b6b;
-    --text: #eaf9e6;
-    --subtext: #9db59a;
+    --bg:#0b1410;
+    --card:rgba(255,255,255,0.06);
+    --border:rgba(255,255,255,0.08);
+    --primary:#c4ff61;
+    --accent:#7affd8;
+    --danger:#ff6b6b;
+    --warning:#ffb84d;
+    --text:#eaf9e6;
+    --sub:#9db59a;
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+body {font-family:"Outfit";background:linear-gradient(#0b1410,#0f1d15);color:var(--text);margin:0;}
 
-body {
-    font-family: "Outfit", sans-serif;
-    background: linear-gradient(180deg, #0b1410, #0f1d15);
-    color: var(--text);
-}
+.header {padding:1.5rem 5%;border-bottom:1px solid var(--border);}
 
-/* HEADER */
-.header {
-    padding: 1.5rem 5%;
-    border-bottom: 1px solid var(--border);
-}
+.dashboard {display:grid;grid-template-columns:2fr 1fr;gap:2rem;padding:2rem 5%;}
 
-.header h1 {
-    color: var(--primary);
-}
+.card {background:var(--card);border:1px solid var(--border);padding:1.5rem;border-radius:18px;margin-bottom:1rem;}
 
-/* LAYOUT */
-.dashboard {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: 2rem;
-    padding: 2rem 5%;
-}
+input,select{width:100%;padding:12px;margin-top:8px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text);}
 
-/* CARD */
-.card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    padding: 1.5rem;
-    border-radius: 18px;
-    margin-bottom: 1rem;
-    transition: 0.3s;
-}
+button{margin-top:12px;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,var(--primary),var(--accent));cursor:pointer;}
 
-.card:hover {
-    transform: translateY(-3px);
-}
+#list{max-height:400px;overflow-y:auto;}
 
-/* INPUT */
-input, select {
-    width: 100%;
-    padding: 12px;
-    margin-top: 8px;
-    border-radius: 12px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text);
-}
+.item{padding:14px;border-radius:12px;margin-bottom:10px;background:rgba(255,255,255,0.04);}
+.low{border:1px solid var(--danger);}
+.risk{border:1px solid var(--warning);}
 
-input:focus, select:focus {
-    border: 1px solid var(--primary);
-    outline: none;
-}
+.tag{font-size:12px;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,0.1);}
 
-/* BUTTON */
-button {
-    margin-top: 12px;
-    padding: 12px;
-    border: none;
-    border-radius: 12px;
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    cursor: pointer;
-    font-weight: 600;
-}
+.alert{padding:10px;border-radius:10px;margin-top:8px;}
+.low-alert{background:rgba(255,107,107,0.15);border:1px solid var(--danger);}
+.risk-alert{background:rgba(255,184,77,0.15);border:1px solid var(--warning);}
 
-button:hover {
-    transform: scale(1.05);
+.summary-box{
+    background:rgba(255,255,255,0.04);
+    padding:12px;
+    border-radius:12px;
+    margin-top:10px;
+    line-height:1.5;
 }
-
-/* LIST */
-#list {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.item {
-    padding: 14px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    background: rgba(255,255,255,0.04);
-}
-
-.low {
-    border: 1px solid var(--danger);
-}
-
-/* TAG */
-.tag {
-    font-size: 12px;
-    padding: 3px 8px;
-    border-radius: 8px;
-    background: rgba(255,255,255,0.1);
-}
-
-/* STATS */
-.stats {
-    display: flex;
-    gap: 10px;
-}
-
-.stat {
-    flex: 1;
-    background: rgba(255,255,255,0.04);
-    padding: 15px;
-    border-radius: 12px;
-    text-align: center;
-}
-
-.stat h2 {
-    color: var(--primary);
-}
-
-/* ALERT */
-.alert {
-    background: rgba(255,107,107,0.15);
-    border: 1px solid var(--danger);
-    padding: 10px;
-    border-radius: 10px;
-    margin-top: 8px;
-}
-
-/* RESPONSIVE */
-@media(max-width: 900px) {
-    .dashboard {
-        grid-template-columns: 1fr;
-    }
-}
-
 </style>
 </head>
 
 <body>
 
 <div class="header">
-    <h1>📦 Inventory Manager</h1>
-    <p>Smart farm resource tracking</p>
+<h1>📦 Smart Inventory Manager</h1>
+<p>AI-powered risk & planning system</p>
 </div>
 
 <div class="dashboard">
@@ -172,17 +65,17 @@ button:hover {
 <div>
 
 <div class="card">
-<h3>Add Inventory</h3>
+<h3>Add Item</h3>
 
 <input id="name" placeholder="Item Name">
 
 <select id="category" onchange="updateUnits()">
-<option value="Seeds">Seeds 🌱</option>
-<option value="Fertilizer">Fertilizer 💧</option>
-<option value="Pesticide">Pesticide 🐛</option>
-<option value="Equipment">Equipment ⚙️</option>
-<option value="Tools">Tools 🔧</option>
-<option value="Fuel">Fuel ⛽</option>
+<option>Seeds</option>
+<option>Fertilizer</option>
+<option>Pesticide</option>
+<option>Equipment</option>
+<option>Tools</option>
+<option>Fuel</option>
 </select>
 
 <select id="unit"></select>
@@ -206,17 +99,14 @@ button:hover {
 <div>
 
 <div class="card">
-<h3>📊 Stats</h3>
-<div class="stats">
-<div class="stat"><h2 id="total">0</h2><p>Total</p></div>
-<div class="stat"><h2 id="low">0</h2><p>Low</p></div>
-<div class="stat"><h2 id="types">0</h2><p>Types</p></div>
-</div>
+<h3>⚠️ Smart Alerts</h3>
+<div id="alerts"></div>
 </div>
 
 <div class="card">
-<h3>⚠️ Alerts</h3>
-<div id="alerts"></div>
+<h3>🧠 AI Summary</h3>
+<button onclick="generateSummary()">Generate AI Insights</button>
+<div id="summary" class="summary-box">No insights yet</div>
 </div>
 
 </div>
@@ -225,103 +115,139 @@ button:hover {
 
 <script>
 
-/* MOCK DATABASE */
-let inventory = [];
-let idCounter = 1;
+let inventory=[];
 
-/* CATEGORY → UNITS */
-const unitMap = {
-    Seeds: ["kg","grams"],
-    Fertilizer: ["kg","bags"],
-    Pesticide: ["liters","ml"],
-    Equipment: ["units"],
-    Tools: ["units"],
-    Fuel: ["liters"]
+const unitMap={
+Seeds:["kg","grams"],
+Fertilizer:["kg","bags"],
+Pesticide:["liters","ml"],
+Equipment:["units"],
+Tools:["units"],
+Fuel:["liters"]
 };
 
-function updateUnits() {
-    const cat = document.getElementById("category").value;
-    const unit = document.getElementById("unit");
-    unit.innerHTML = "";
-    unitMap[cat].forEach(u => unit.innerHTML += `<option>${u}</option>`);
+function updateUnits(){
+    const cat=document.getElementById("category").value;
+    const unit=document.getElementById("unit");
+    unit.innerHTML="";
+    unitMap[cat].forEach(u=>unit.innerHTML+=`<option>${u}</option>`);
 }
 updateUnits();
 
-/* ADD ITEM */
-function addItem() {
-
-    const item = {
-        id: idCounter++,
-        name: document.getElementById("name").value,
-        category: document.getElementById("category").value,
-        unit: document.getElementById("unit").value,
-        quantity: parseFloat(document.getElementById("quantity").value),
-        threshold: parseFloat(document.getElementById("threshold").value),
-        usage_rate: parseFloat(document.getElementById("usage_rate").value) || 0,
-        expiry: document.getElementById("expiry").value
-    };
-
-    inventory.push(item);
+// ======================
+// LOAD
+// ======================
+async function loadInventory(){
+    const res=await fetch("/api/inventory");
+    const data=await res.json();
+    inventory=data.inventory||[];
     render();
 }
 
-/* DAYS LEFT */
-function daysLeft(item) {
-    if(!item.usage_rate) return "N/A";
-    return (item.quantity / item.usage_rate).toFixed(1);
+// ======================
+// ADD
+// ======================
+async function addItem(){
+
+    const item={
+        name:name.value,
+        category:category.value,
+        unit:unit.value,
+        quantity:parseFloat(quantity.value),
+        threshold:parseFloat(threshold.value),
+        usage_rate:parseFloat(usage_rate.value),
+        expiry:expiry.value
+    };
+
+    await fetch("/api/inventory/add",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(item)});
+    loadInventory();
 }
 
-/* RENDER */
-function render() {
+// ======================
+// USE
+// ======================
+async function useItem(id){
+    await fetch("/api/inventory/use",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({id})});
+    loadInventory();
+}
 
-    const list = document.getElementById("list");
-    const alerts = document.getElementById("alerts");
+// ======================
+// RISK LOGIC
+// ======================
+function checkRisk(item){
 
-    list.innerHTML = "";
-    alerts.innerHTML = "";
+    let risks=[];
 
-    let lowCount = 0;
+    if(item.quantity<=item.threshold){
+        risks.push("Low stock");
+    }
 
-    inventory.forEach(item => {
+    if(item.usage_rate && (item.quantity/item.usage_rate)<3){
+        risks.push("Will run out soon");
+    }
 
-        const isLow = item.quantity <= item.threshold;
+    if(item.expiry){
+        const days=(new Date(item.expiry)-new Date())/(1000*60*60*24);
+        if(days<5) risks.push("Expiring soon");
+    }
 
-        if(isLow) {
-            lowCount++;
-            alerts.innerHTML += `<div class="alert">⚠️ Low stock: ${item.name}</div>`;
+    return risks;
+}
+
+// ======================
+// RENDER
+// ======================
+function render(){
+
+    const list=document.getElementById("list");
+    const alerts=document.getElementById("alerts");
+
+    list.innerHTML="";
+    alerts.innerHTML="";
+
+    inventory.forEach(item=>{
+
+        const risks=checkRisk(item);
+        const isLow=item.quantity<=item.threshold;
+
+        if(risks.length){
+            alerts.innerHTML+=`<div class="alert ${isLow?'low-alert':'risk-alert'}">⚠️ ${item.name}: ${risks.join(", ")}</div>`;
         }
 
-        list.innerHTML += `
-        <div class="item ${isLow ? 'low':''}">
-            <strong>${item.name}</strong> 
+        list.innerHTML+=`
+        <div class="item ${isLow?'low':''} ${risks.length?'risk':''}">
+            <strong>${item.name}</strong>
             <span class="tag">${item.category}</span><br><br>
 
             📦 ${item.quantity} ${item.unit}<br>
-            ⏳ Days Left: ${daysLeft(item)}<br>
-            📅 Expiry: ${item.expiry || "N/A"}<br>
+            ⏳ ${(item.quantity/(item.usage_rate||1)).toFixed(1)} days left<br>
 
-            <button onclick="useItem(${item.id})">Use Item</button>
+            <button onclick="useItem(${item.id})">Use</button>
         </div>`;
     });
-
-    document.getElementById("total").innerText = inventory.length;
-    document.getElementById("low").innerText = lowCount;
-    document.getElementById("types").innerText =
-        [...new Set(inventory.map(i => i.category))].length;
 }
 
-/* USE ITEM */
-function useItem(id) {
-    const item = inventory.find(i => i.id === id);
-    if(item) {
-        item.quantity -= 1;
-        if(item.quantity < 0) item.quantity = 0;
-    }
-    render();
+// ======================
+// 🧠 AI SUMMARY
+// ======================
+async function generateSummary(){
+
+    const res=await fetch("/api/inventory/summary",{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({inventory})
+    });
+
+    const data=await res.json();
+
+    document.getElementById("summary").innerText =
+        data.summary || "No insights available";
 }
+
+// INIT
+loadInventory();
 
 </script>
 
 </body>
 </html>
-```
